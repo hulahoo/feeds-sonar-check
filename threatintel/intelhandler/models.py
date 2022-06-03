@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import DateTimeField
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class CreationDateTimeField(DateTimeField):
@@ -28,15 +29,42 @@ class CreationDateTimeField(DateTimeField):
         return name, path, args, kwargs
 
 
+class ModificationDateTimeField(CreationDateTimeField):
+    """
+    ModificationDateTimeField
+    By default, sets editable=False, blank=True, auto_now=True
+    Sets value to now every time the object is saved.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("auto_now", True)
+        DateTimeField.__init__(self, *args, **kwargs)
+
+    def get_internal_type(self):
+        return "DateTimeField"
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        if self.auto_now is not False:
+            kwargs["auto_now"] = True
+        return name, path, args, kwargs
+
+    def pre_save(self, model_instance, add):
+        if not getattr(model_instance, "update_modified", True):
+            return getattr(model_instance, self.attname)
+        return super().pre_save(model_instance, add)
+
+
 class BaseModel(models.Model):
     """
     BaseModel
     An abstract base class model that provides self-managed
-    "created" field and "origin" field.
+    "created" field and "modified" field.
     """
 
     created = CreationDateTimeField("создано")
-    origin = models.CharField("источник", max_length=128)
+    modified = ModificationDateTimeField("изменено")
+    # origin = models.CharField("источник", max_length=128)
 
     class Meta:
         get_latest_by = "modified"
@@ -161,13 +189,18 @@ class MispEvent(BaseModel):
         verbose_name_plural = "Misp события"
 
 
-class Feed(models.Model):
+class Feed(BaseModel):
     MISP = "MISP"
-    EMAIL = "MAIL"
-    FYLE_HASH = "HASH"
+    EMAIL_FROM = "FEMA"
+    EMAIL_SUBJECT = "SEMA"
+    MD5_HASH = "MD5H"
+    SHA1_HASH = "SHA1"
+    SHA256_HASH = "SHA2"
     IP = "IPAD"
     URL = "URLS"
     DOMAIN = "DOMN"
+    FILENAME = "FILE"
+    REGISTRY = "REGS"
 
     CSV_FILE = "CSV"
     JSON_FILE = "JSN"
@@ -185,10 +218,15 @@ class Feed(models.Model):
     EIGHT_HOURS = "HR8"
     SIXTEEN_HOURS = "H16"
     TWENTY_FOUR_HOURS = "H24"
+
     TYPE_OF_FEED_CHOICES = [
-        (MISP, "MISP Feed"),
-        (EMAIL, "Email's feed"),
-        (FYLE_HASH, "File hashes"),
+        (EMAIL_FROM, "Email's origin"),
+        (EMAIL_SUBJECT, "Email's subject"),
+        (MD5_HASH, "File hashe MD5"),
+        (SHA1_HASH, "File hashe SHA1"),
+        (SHA256_HASH, "File hashe SHA256"),
+        (FILENAME, "File name"),
+        (REGISTRY, "Registry"),
         (IP, "IP adresses"),
         (URL, "Full URL's"),
         (DOMAIN, "Domain's"),
@@ -216,7 +254,7 @@ class Feed(models.Model):
     ]
 
     type_of_feed = models.CharField(
-        "Тип фида", max_length=4, choices=TYPE_OF_FEED_CHOICES, default=EMAIL
+        "Тип фида", max_length=4, choices=TYPE_OF_FEED_CHOICES, default=IP
     )
     format_of_feed = models.CharField(
         "Формат фида", max_length=3, choices=FORMAT_OF_FEED_CHOICES, default=TXT_FILE
@@ -225,8 +263,12 @@ class Feed(models.Model):
         "Тип авторизации", max_length=3, choices=TYPE_OF_AUTH_CHOICES, default=NO_AUTH
     )
     polling_frequency = models.CharField(
-        "Тип фида", max_length=3, choices=POLLING_FREQUENCY_CHOICES, default=NEVER
+        "Частота обновления фида",
+        max_length=3,
+        choices=POLLING_FREQUENCY_CHOICES,
+        default=NEVER,
     )
+
     auth_login = models.CharField(
         "Логин для авторизации", max_length=32, blank=True, null=True
     )
@@ -241,5 +283,77 @@ class Feed(models.Model):
     )
     sertificate = models.FileField("Файл сертификат", blank=True, null=True)
     vendor = models.CharField("Вендор", max_length=32)
+    name = models.CharField("Название фида", max_length=32, unique=True)
     link = models.CharField("Ссылка на фид", max_length=100)
-    created = CreationDateTimeField("создано")
+    confidence = models.IntegerField(
+        "Достоверность", validators=[MaxValueValidator(100), MinValueValidator(0)]
+    )
+    records_quantity = models.IntegerField("Количество записей", blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = "Фид"
+        verbose_name_plural = "Фиды"
+
+
+class Indicator(BaseModel):
+    EMAIL_FROM = "FEMA"
+    EMAIL_SUBJECT = "SEMA"
+    MD5_HASH = "MD5H"
+    SHA1_HASH = "SHA1"
+    SHA256_HASH = "SHA2"
+    IP = "IPAD"
+    URL = "URLS"
+    DOMAIN = "DOMN"
+    FILENAME = "FILE"
+    REGISTRY = "REGS"
+
+    TYPE_OF_INDICATOR_CHOICES = [
+        (EMAIL_FROM, "Email's origin"),
+        (EMAIL_SUBJECT, "Email's subject"),
+        (MD5_HASH, "File hashe MD5"),
+        (SHA1_HASH, "File hashe SHA1"),
+        (SHA256_HASH, "File hashe SHA256"),
+        (FILENAME, "File name"),
+        (REGISTRY, "Registry"),
+        (IP, "IP adresses"),
+        (URL, "Full URL's"),
+        (DOMAIN, "Domain's"),
+    ]
+
+    type = models.CharField(
+        "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
+    )
+    value = models.CharField("Значение индикатора", max_length=256)
+    # created_date = DateTimeField("Дата создания") - есть поле created от родительской модели
+    updated_date = DateTimeField("Дата последнего обновления")
+    weight = models.IntegerField(
+        "Вес", validators=[MaxValueValidator(100), MinValueValidator(0)]
+    )
+    # tag =
+    false_detected = models.IntegerField(
+        "счетчик ложных срабатываний", validators=[MinValueValidator(0)], default=0
+    )
+    positive_detected = models.IntegerField(
+        "счетчик позитивных срабатываний", validators=[MinValueValidator(0)], default=0
+    )
+    detected = models.IntegerField(
+        "общий счетчик срабатываний", validators=[MinValueValidator(0)], default=0
+    )
+    first_detected_date = DateTimeField(
+        "Дата первого срабатывания", blank=True, null=True
+    )
+    last_detected_date = DateTimeField(
+        "Дата последнего срабатывания", blank=True, null=True
+    )
+    # Данные об источнике
+
+    # Контекст ниже
+    def __str__(self):
+        return f"{self.value}"
+
+    class Meta:
+        verbose_name = "Фид"
+        verbose_name_plural = "Фиды"
