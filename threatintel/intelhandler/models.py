@@ -71,68 +71,13 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Domain(BaseModel):
-    domain_name = models.CharField("Доменное имя", max_length=256, unique=True)
-
-    def __str__(self):
-        return f"{self.created.date()} | {self.domain_name}"
-
-    class Meta:
-        verbose_name = "Домен"
-        verbose_name_plural = "Домены"
-
-
-class IPAddress(BaseModel):
-    address = models.CharField("IP адрес", max_length=39, unique=True)
-
-    def __str__(self):
-        return f"{self.created.date()} | {self.address}"
-
-    class Meta:
-        verbose_name = "IP адрес"
-        verbose_name_plural = "IP адреса"
-
-
-class FullURL(BaseModel):
-    url = models.CharField("URL", max_length=256, unique=True)
-
-    def __str__(self):
-        return f"{self.created.date()} | {self.url}"
-
-    class Meta:
-        verbose_name = "URL"
-        verbose_name_plural = "URL'ы"
-
-
-class Email(BaseModel):
-    email = models.CharField("Почта", max_length=128, unique=True)
-
-    def __str__(self):
-        return f"{self.created.date()} | {self.email}"
-
-    class Meta:
-        verbose_name = "Адрес электронной почты"
-        verbose_name_plural = "Адреса электронных почт"
-
-
-class FileHash(BaseModel):
-    hash = models.CharField("Хэш файла", max_length=128, unique=True)
-
-    def __str__(self):
-        return f"{self.created.date()} | {self.hash}"
-
-    class Meta:
-        verbose_name = "Хэш файла"
-        verbose_name_plural = "Хэши файлов"
-
-
 class Tag(BaseModel):
     name = models.CharField("Название тега", max_length=30)
     colour = models.CharField("Название тега", max_length=30, blank=True, null=True)
     exportable = models.BooleanField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.name} | {self.colour}"
 
     class Meta:
         verbose_name = "Тег"
@@ -140,7 +85,7 @@ class Tag(BaseModel):
 
 
 class OrganizationContact(BaseModel):
-    name = models.CharField("Название организации", max_length=30)
+    name = models.CharField("Название организации", max_length=64)
     uuid = models.CharField("Уникальный идентификатор", max_length=36, primary_key=True)
 
     def __str__(self):
@@ -152,21 +97,54 @@ class OrganizationContact(BaseModel):
 
 
 class Attribute(BaseModel):
-    type = models.CharField("Тип аттрибута", max_length=30)
+    type = models.CharField("Тип", max_length=30)
+    value = models.CharField("Значение", max_length=128)
     timestamp = models.CharField("Временная отметка", max_length=10)
     to_ids = models.BooleanField(blank=True, null=True)
+    disable_correlation = models.BooleanField(blank=True, null=True)
+    object_relation = models.CharField("Отношения объектов", max_length=15)
+    meta_category = models.CharField("Категория аттрибута", max_length=30)
+    comment = models.CharField("Комментарий", max_length=128, blank=True, null=True)
+    uuid = models.CharField("Уникальный идентификатор", max_length=36, primary_key=True)
+    template_uuid = models.CharField(
+        "Уникальный идентификатор темплейта", max_length=36
+    )
+    object_relation = models.CharField("Отношение к объекту", max_length=30)
+    value = models.CharField("Значение", max_length=128)
+
+    def __str__(self):
+        return f"{self.uuid}"
+
+    class Meta:
+        verbose_name = "Атрибут"
+        verbose_name_plural = "Атрибуты"
+
+
+class MispObject(BaseModel):
+    type = models.CharField("Тип аттрибута", max_length=30)
+    timestamp = models.CharField("Временная отметка", max_length=10)
+    template_version = models.CharField("Версия темплейта", max_length=10)
+    sharing_group_id = models.CharField("ID группы распространения", max_length=10)
+    description = models.CharField("Описание", max_length=128)
+    deleted = models.BooleanField(blank=True, null=True)
+    name = models.CharField("Название", max_length=32, unique=True)
     category = models.CharField("Категория аттрибута", max_length=30)
     comment = models.CharField("Комментарий", max_length=128, blank=True, null=True)
     uuid = models.CharField("Уникальный идентификатор", max_length=36, primary_key=True)
     object_relation = models.CharField("Отношение к объекту", max_length=30)
     value = models.CharField("Значение", max_length=128)
+    attribute = models.ManyToManyField(
+        Attribute,
+        verbose_name="Аттрибут MISP Object'а",
+        related_name="misp_object_attribute",
+    )
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.uuid}"
 
     class Meta:
-        verbose_name = "Тег"
-        verbose_name_plural = "Теги"
+        verbose_name = "MISP объект"
+        verbose_name_plural = "MISP объекты"
 
 
 class MispEvent(BaseModel):
@@ -179,14 +157,24 @@ class MispEvent(BaseModel):
     analysis = models.CharField("Анализ", max_length=1)
     uuid = models.CharField("Уникальный идентификатор", max_length=36, primary_key=True)
     orgc = models.ForeignKey(OrganizationContact, on_delete=models.SET_NULL, null=True)
-    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True)
+    tag = models.ManyToManyField(
+        Tag, verbose_name="Теги", related_name="misp_event_tags"
+    )
+    attribute = models.ManyToManyField(
+        Attribute,
+        verbose_name="Аттрибут MISP Event'а",
+        related_name="misp_event_attribute",
+    )
+    object = models.ManyToManyField(
+        MispObject, verbose_name="Объект MISP Event'а", related_name="misp_event_object"
+    )
 
     def __str__(self):
-        return f"{self.created.date()} | {self.uuid}"
+        return f"{self.info} | {self.uuid}"
 
     class Meta:
-        verbose_name = "Misp событие"
-        verbose_name_plural = "Misp события"
+        verbose_name = "MISP событие"
+        verbose_name_plural = "MISP события"
 
 
 class Feed(BaseModel):
@@ -281,6 +269,7 @@ class Feed(BaseModel):
     separator = models.CharField(
         "Разделитель для CSV формата", max_length=8, blank=True, null=True
     )
+    # field_names =
     sertificate = models.FileField("Файл сертификат", blank=True, null=True)
     vendor = models.CharField("Вендор", max_length=32)
     name = models.CharField("Название фида", max_length=32, unique=True)
@@ -327,12 +316,11 @@ class Indicator(BaseModel):
         "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
     )
     value = models.CharField("Значение индикатора", max_length=256)
-    # created_date = DateTimeField("Дата создания") - есть поле created от родительской модели
     updated_date = DateTimeField("Дата последнего обновления")
     weight = models.IntegerField(
         "Вес", validators=[MaxValueValidator(100), MinValueValidator(0)]
     )
-    # tag =
+    tag = models.ManyToManyField(Tag, "Теги")
     false_detected = models.IntegerField(
         "счетчик ложных срабатываний", validators=[MinValueValidator(0)], default=0
     )
@@ -349,11 +337,119 @@ class Indicator(BaseModel):
         "Дата последнего срабатывания", blank=True, null=True
     )
     # Данные об источнике
+    supplier_name = models.CharField("Название источника", max_length=128)
+    supplier_vendor_name = models.CharField("Название поставщика ", max_length=128)
+    supplier_type = models.CharField("Тип поставщика", max_length=64)
+    supplier_confidence = models.IntegerField(
+        "Достоверность", validators=[MaxValueValidator(100), MinValueValidator(0)]
+    )
+    supplier_created_date = DateTimeField(
+        "Дата последнего обновления", blank=True, null=True
+    )
+    # Контекст
+    ioc_context_exploits_md5 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_exploits_sha1 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_exploits_sha256 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_exploits_threat = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_av_verdict = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_ip = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_md5 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_sha1 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_sha256 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_affected_products_product = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    joc_context_domains = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_file_names = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_file_size = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_file_type = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_files_behaviour = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_files_md5 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_files_sha1 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_files_sha256 = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_files_threat = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_malware = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_mask = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_popularity = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_port = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_protocol = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_publication_name = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_severity = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_type = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_url = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_urls_url = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_vendors_vendor = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_geo = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_id = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_industry = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_ip = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_ip_geo = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_ip_whois_asn = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_ip_whois_contact_abuse_country = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_contact_abuse_email = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_contact_abuse_name = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_contact_owner_city = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_contact_owner_code = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_contact_owner_country = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_contact_owner_email = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_contact_owner_name = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_country = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_created = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_desrc = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_ip_whois_net_name = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_net_range = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_ip_whois_updated = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_whois_mx = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_mx_ips = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_ns = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_ns_ips = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_city = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_country = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_created = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_domain = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_email = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_expires = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_name = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_org = models.CharField(max_length=64, blank=True, null=True)
+    ioc_context_whois_registrar_email = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_whois_registrar_name = models.CharField(
+        max_length=64, blank=True, null=True
+    )
+    ioc_context_whois_updated = models.CharField(max_length=64, blank=True, null=True)
 
-    # Контекст ниже
     def __str__(self):
         return f"{self.value}"
 
     class Meta:
-        verbose_name = "Фид"
-        verbose_name_plural = "Фиды"
+        verbose_name = "Индикатор"
+        verbose_name_plural = "Индикаторы"

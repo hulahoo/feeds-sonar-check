@@ -1,25 +1,63 @@
-from .models import Feed, Indicator
+from intelhandler.models import (
+    Feed,
+    Indicator,
+    MispEvent,
+    MispObject,
+    Attribute,
+    OrganizationContact,
+    Tag,
+)
 from datetime import datetime
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+import csv
 import requests
+import json
 
 
-def create_indicator(raw_indicators, feed):
+def convert_to_indicator(raw_indicators, feed):
     """
     Из списка индикаторов и параметров фида создает список
     """
-    complete_indicators = []
-    for raw_indicator in raw_indicators:
-        complete_indicators.append(
-            Indicator(
+    print("Конвертирую фид в индикаторы")
+    if feed.format_of_feed == "TXT":
+        complete_indicators = []
+        for raw_indicator in raw_indicators:
+            indicator = Indicator(
                 type=feed.type_of_feed,
                 value=raw_indicator,
                 weight=feed.confidence,
                 updated_date=datetime.now(),
             )
+            complete_indicators.append(indicator)
+            indicator.save()
+        return complete_indicators
+    elif feed.format_of_feed == "JSON":
+        event = raw_indicators.get("Event")
+        misp_event = MispEvent(
+            threat_level_id=event.get("threat_level_id"),
+            timestamp=event.get("timestamp"),
+            info=event.get("info"),
+            publish_timestamp=event.get("publish_timestamp"),
+            date=event.get("date"),
+            published=event.get("published"),
+            analysis=event.get("analysis"),
+            uuid=event.get("uuid"),
         )
-    return complete_indicators
+        # additional relations
+        organization_contacts = OrganizationContact(
+            name=event.get("Orgc").get("name"),
+            uuid=event.get("Orgc").get("uuid"),
+        )
+        organization_contacts.save()
+        misp_event.orgc = organization_contacts
+        tags = []
+        for tag in event.get("Tag"):
+            tag = Tag(name=tag.get("name"), colour=tag.get("colour"))
+            tag.save()
+            tags.append(tag)
+        misp_event.tag.add(tags)
+
+        return misp_event
 
 
 def get_url(url) -> str:
@@ -45,9 +83,20 @@ def parse_free_text(raw_indicators, feed):
     raw_indicators = [
         ioc.replace("\r", "") for ioc in raw_indicators if not ioc.startswith("#")
     ]
-
-    result = create_indicator(raw_indicators, feed)
+    result = convert_to_indicator(raw_indicators, feed)
     return result
+
+
+# In work
+def parse_misp_event(urls_for_parsing, feed):
+    """
+    Парсит MISP евенты со страницы с url'ами.
+    """
+    indicators = []
+    for url in urls_for_parsing:
+        indicators.append = convert_to_indicator(json.loads(get_url(url)), feed)
+        pass
+    return indicators
 
 
 def parse_misp(page_with_urls, feed) -> list:
@@ -55,14 +104,16 @@ def parse_misp(page_with_urls, feed) -> list:
     Парсит переданный текст со списком url'ок и отдает список индикаторов.
     Применяется когда по ссылке находится список json файлов.
     """
-    if feed.link[-1] != "/":
-        origin_link = feed.link + "/"
+    # При неправильном пути
+    # if feed.link[-1] != "/":
+    #     origin_link = feed.link + "/"
     parsed_page = BeautifulSoup(page_with_urls, "html.parser")
     urls_for_parsing = []
     for link in list(parsed_page.find_all("a")):
         if ".json" in link.text:
             urls_for_parsing.append(f"{feed.link}{link.get('href')}")
-    return urls_for_parsing
+    misp_events = parse_misp_event(urls_for_parsing, feed)
+    return misp_events
 
 
 def parse_xml(raw_indicators, feed) -> list:
@@ -73,20 +124,16 @@ def parse_xml(raw_indicators, feed) -> list:
     pass
 
 
-def parse_csv(raw_indicators, feed) -> list:  # не доделано
+def parse_csv(raw_indicators, feed, fieldnames) -> list:  # не доделано
     """
     Парсит переданный текст с параметрами для csv и отдает список индикаторов.
     """
     raw_indicators = raw_indicators.split("\n")
-    try:
-        raw_indicators.remove("")
-    except:
+    for row in csv.DictReader(
+        raw_indicators, fieldnames=["Firstseen", "DstIP", "DstPort"], dialect="excel"
+    ):
         pass
-    raw_indicators = [
-        ioc.replace("\r", "") for ioc in raw_indicators if not ioc.startswith("#")
-    ]
-
-    result = create_indicator(raw_indicators, feed)
+    result = convert_to_indicator(raw_indicators, feed)
     pass
 
 
@@ -104,6 +151,7 @@ def parse_feed(feed):
     try:
         match feed.format_of_feed:
             case "TXT":
+                print("This is TXT feed format")
                 result = parse_free_text(raw_data, feed)
             case "XML":
                 result = parse_xml(raw_data, feed)
