@@ -7,18 +7,19 @@ from intelhandler.models import (
     OrganizationContact,
     Tag,
 )
-from datetime import datetime
+from datetime import datetime, date
 from bs4 import BeautifulSoup
 import csv
 import requests
 import json
 
 
-def convert_to_indicator(raw_indicators, feed):
-    """
-    Из списка индикаторов и параметров фида создает список
-    """
-    print("Конвертирую фид в индикаторы")
+def convert_csv_to_indicator(raw_indicators, feed):
+    fields = feed.field_names.split(",")
+    pass
+
+
+def convert_txt_to_indicator(raw_indicators, feed):
     if feed.format_of_feed == "TXT":
         complete_indicators = []
         for raw_indicator in raw_indicators:
@@ -31,7 +32,23 @@ def convert_to_indicator(raw_indicators, feed):
             complete_indicators.append(indicator)
             indicator.save()
         return complete_indicators
-    elif feed.format_of_feed == "JSON":
+
+
+def convert_attribute_to_indicator(attribute):
+    indicator = Indicator(
+        value=attribute.get("value"),
+        last_detected_date=date.fromtimestamp(attribute.get("timestamp")),
+        category=attribute.get("category"),
+        uuid=attribute.get("uuid"),
+    )
+    return indicator
+
+
+def convert_misp_to_indicator(raw_indicators, feed):
+    """
+    Из списка индикаторов и параметров фида создает список
+    """
+    if feed.format_of_feed == "JSON":
         event = raw_indicators.get("Event")
         misp_event = MispEvent(
             threat_level_id=event.get("threat_level_id"),
@@ -56,7 +73,9 @@ def convert_to_indicator(raw_indicators, feed):
             tag.save()
             tags.append(tag)
         misp_event.tag.add(tags)
-
+        attributes = []
+        for attribute in event.get("Attribute"):
+            pass
         return misp_event
 
 
@@ -83,18 +102,17 @@ def parse_free_text(raw_indicators, feed):
     raw_indicators = [
         ioc.replace("\r", "") for ioc in raw_indicators if not ioc.startswith("#")
     ]
-    result = convert_to_indicator(raw_indicators, feed)
+    result = convert_txt_to_indicator(raw_indicators, feed)
     return result
 
 
-# In work
 def parse_misp_event(urls_for_parsing, feed):
     """
     Парсит MISP евенты со страницы с url'ами.
     """
     indicators = []
     for url in urls_for_parsing:
-        indicators.append = convert_to_indicator(json.loads(get_url(url)), feed)
+        indicators.append = convert_misp_to_indicator(json.loads(get_url(url)), feed)
         pass
     return indicators
 
@@ -128,12 +146,17 @@ def parse_csv(raw_indicators, feed, fieldnames) -> list:  # не доделан�
     """
     Парсит переданный текст с параметрами для csv и отдает список индикаторов.
     """
-    raw_indicators = raw_indicators.split("\n")
+    raw_indicators = [
+        row for row in raw_indicators.split("\n") if not row.startswith("#")
+    ]
     for row in csv.DictReader(
-        raw_indicators, fieldnames=["Firstseen", "DstIP", "DstPort"], dialect="excel"
+        raw_indicators,
+        fieldnames=feed.field_names.split(","),
+        dialect="excel",
     ):
-        pass
-    result = convert_to_indicator(raw_indicators, feed)
+        print(row)
+
+    result = convert_csv_to_indicator(raw_indicators, feed)
     pass
 
 
@@ -151,7 +174,6 @@ def parse_feed(feed):
     try:
         match feed.format_of_feed:
             case "TXT":
-                print("This is TXT feed format")
                 result = parse_free_text(raw_data, feed)
             case "XML":
                 result = parse_xml(raw_data, feed)

@@ -103,11 +103,11 @@ class Attribute(BaseModel):
     to_ids = models.BooleanField(blank=True, null=True)
     disable_correlation = models.BooleanField(blank=True, null=True)
     object_relation = models.CharField("Отношения объектов", max_length=15)
-    meta_category = models.CharField("Категория аттрибута", max_length=30)
+    category = models.CharField("Категория аттрибута", max_length=30)
     comment = models.CharField("Комментарий", max_length=128, blank=True, null=True)
     uuid = models.CharField("Уникальный идентификатор", max_length=36, primary_key=True)
     template_uuid = models.CharField(
-        "Уникальный идентификатор темплейта", max_length=36
+        "Уникальный идентификатор темплейта", max_length=36, blank=True, null=True
     )
     object_relation = models.CharField("Отношение к объекту", max_length=30)
     value = models.CharField("Значение", max_length=128)
@@ -269,7 +269,9 @@ class Feed(BaseModel):
     separator = models.CharField(
         "Разделитель для CSV формата", max_length=8, blank=True, null=True
     )
-    # field_names =
+    field_names = models.CharField(
+        "Названия полей через запятую", max_length=128, blank=True, null=True
+    )
     sertificate = models.FileField("Файл сертификат", blank=True, null=True)
     vendor = models.CharField("Вендор", max_length=32)
     name = models.CharField("Название фида", max_length=32, unique=True)
@@ -298,6 +300,7 @@ class Indicator(BaseModel):
     DOMAIN = "DOMN"
     FILENAME = "FILE"
     REGISTRY = "REGS"
+    
 
     TYPE_OF_INDICATOR_CHOICES = [
         (EMAIL_FROM, "Email's origin"),
@@ -314,6 +317,15 @@ class Indicator(BaseModel):
 
     type = models.CharField(
         "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
+    )
+    misp_type = models.CharField(
+        "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
+    )
+    uuid = models.CharField(
+        "Уникальный идентификатор индикатора", unique=True, max_length=36
+    )
+    category = models.CharField(
+        "Категория индикатора", max_length=128, blank=True, null=True
     )
     value = models.CharField("Значение индикатора", max_length=256)
     updated_date = DateTimeField("Дата последнего обновления")
