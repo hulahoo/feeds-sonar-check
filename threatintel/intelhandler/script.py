@@ -90,6 +90,33 @@ def get_url(url) -> str:
     return received_data
 
 
+def parse_stix(data_from_url):
+    """
+    Парсит переданный json в формате STIX и отдает список индикаторов.
+    """
+    bundle = json.loads(data_from_url)
+    objects = bundle.get("objects")
+    raw_indicators = []
+    for object in objects:
+        if object.get("type") == "indicator":
+            raw_indicators.append(object)
+    indicators = []
+    for raw_indicator in raw_indicators:
+        indicator = Indicator(
+            # uuid=uuid.uuid5(),
+            value=raw_indicator.get("name"),
+            first_detected_date=raw_indicator.get("created"),
+            updated_date=raw_indicator.get("modified"),
+        )
+        pattern = raw_indicator.get("pattern")
+        if "ip" in pattern:
+            indicator.ioc_context_ip = pattern
+        elif "filesize" in pattern:
+            indicator.ioc_context_file_size = pattern
+        indicators.append(indicator)
+    return indicators
+
+
 def parse_free_text(raw_indicators, feed):
     """
     Парсит переданный текст и отдает список индикаторов.
@@ -171,16 +198,16 @@ def parse_feed(feed):
         raw_data = get_url(feed.link)
     except:
         raise Exception("Возникла ошибка при получении данных")
-    try:
-        match feed.format_of_feed:
-            case "TXT":
-                result = parse_free_text(raw_data, feed)
-            case "XML":
-                result = parse_xml(raw_data, feed)
-            case "JSN":
-                result = parse_misp(raw_data, feed)
-            case "CSV":
-                result = parse_csv(raw_data, feed)
-    except:
-        raise Exception("Возникла ошибка при обработке данных")
-    return result
+    # try:
+    #     match feed.format_of_feed:
+    #         case "TXT":
+    #             result = parse_free_text(raw_data, feed)
+    #         case "XML":
+    #             result = parse_xml(raw_data, feed)
+    #         case "JSN":
+    #             result = parse_misp(raw_data, feed)
+    #         case "CSV":
+    #             result = parse_csv(raw_data, feed)
+    # except:
+    #     raise Exception("Возникла ошибка при обработке данных")
+    # return result

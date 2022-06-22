@@ -2024,15 +2024,23 @@ bundle = """
 
 bundle = json.loads(bundle)
 objects = bundle.get("objects")
-indicators = []
+raw_indicators = []
 for object in objects:
     if object.get("type") == "indicator":
-        indicators.append(object)
-        # pprint(object)
+        raw_indicators.append(object)
 
-
-for indicator in indicators:
-    Indicator(
+indicators = []
+for raw_indicator in raw_indicators:
+    indicator = Indicator(
         # uuid=uuid.uuid5(),
-        value=indicator.get("name")
+        value=raw_indicator.get("name"),
+        first_detected_date=raw_indicator.get("created"),
+        updated_date=raw_indicator.get("modified"),
     )
+    pattern = raw_indicator.get("pattern")
+    if "ip" in pattern:
+        indicator.ioc_context_ip = pattern
+    elif "filesize" in pattern:
+        indicator.ioc_context_file_size = pattern
+
+    indicators.append(indicator)
