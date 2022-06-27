@@ -300,7 +300,6 @@ class Indicator(BaseModel):
     DOMAIN = "DOMN"
     FILENAME = "FILE"
     REGISTRY = "REGS"
-    
 
     TYPE_OF_INDICATOR_CHOICES = [
         (EMAIL_FROM, "Email's origin"),
@@ -316,9 +315,6 @@ class Indicator(BaseModel):
     ]
 
     type = models.CharField(
-        "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
-    )
-    misp_type = models.CharField(
         "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
     )
     uuid = models.CharField(

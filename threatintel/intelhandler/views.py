@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from .forms import FeedForm
 from confluent_kafka import Consumer, Producer
+from confluent_kafka.admin import AdminClient, NewTopic
 
 # Create your views here.
 def feed_add(request):
@@ -35,9 +36,10 @@ def add_to_query(request):
 
 
 def read_from_query(request):
+
     c = Consumer(
         {
-            "bootstrap.servers": "broker",
+            "bootstrap.servers": "broker:9092",
             "group.id": "mygroup",
             "auto.offset.reset": "earliest",
         }

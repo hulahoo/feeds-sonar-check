@@ -46,37 +46,41 @@ def convert_attribute_to_indicator(attribute):
 
 def convert_misp_to_indicator(raw_indicators, feed):
     """
-    Из списка индикаторов и параметров фида создает список
+    Из MISP события и входящих в него параметров и объектов -
+    импортирует список индиктаторов
     """
     if feed.format_of_feed == "JSON":
-        event = raw_indicators.get("Event")
-        misp_event = MispEvent(
-            threat_level_id=event.get("threat_level_id"),
-            timestamp=event.get("timestamp"),
-            info=event.get("info"),
-            publish_timestamp=event.get("publish_timestamp"),
-            date=event.get("date"),
-            published=event.get("published"),
-            analysis=event.get("analysis"),
-            uuid=event.get("uuid"),
-        )
-        # additional relations
-        organization_contacts = OrganizationContact(
-            name=event.get("Orgc").get("name"),
-            uuid=event.get("Orgc").get("uuid"),
-        )
-        organization_contacts.save()
-        misp_event.orgc = organization_contacts
-        tags = []
-        for tag in event.get("Tag"):
-            tag = Tag(name=tag.get("name"), colour=tag.get("colour"))
-            tag.save()
-            tags.append(tag)
-        misp_event.tag.add(tags)
-        attributes = []
-        for attribute in event.get("Attribute"):
-            pass
-        return misp_event
+        indicators = []
+        attributes = raw_indicators.get("Event").get("Attribute")
+        for attribute in attributes:
+            indicator = Indicator(
+                value=attribute.get("value"),
+                uuid=attribute.get("uuid"),
+                ioc_context_type=attribute.get("type"),
+                weight=feed.confidence,
+                updated_date=datetime.now(),
+            )
+            indicators.append(indicator)
+        if raw_indicators.get("Event").get("Object"):
+            for object in raw_indicators.get("Event").get("Object"):
+                attribute_in_object = object.get("Attribute")
+                indicator = Indicator(
+                    value=attribute_in_object.get("value"),
+                    uuid=attribute_in_object.get("uuid"),
+                    ioc_context_type=attribute_in_object.get("type"),
+                    weight=feed.confidence,
+                    updated_date=datetime.now(),
+                )
+                indicators.append(indicator)
+        return indicators
+
+
+def parse_custom_json(raw_json, feed):
+    """
+    Парсит переданный кастомный json с выбранными из фида полями и отдает список индикаторов.
+    """
+    
+    pass
 
 
 def get_url(url) -> str:
@@ -111,6 +115,7 @@ def parse_stix(data_from_url):
         pattern = raw_indicator.get("pattern")
         if "ip" in pattern:
             indicator.ioc_context_ip = pattern
+            indicator.type = "IP"
         elif "filesize" in pattern:
             indicator.ioc_context_file_size = pattern
         indicators.append(indicator)
@@ -187,27 +192,27 @@ def parse_csv(raw_indicators, feed, fieldnames) -> list:  # не доделан�
     pass
 
 
-def parse_feed(feed):
-    """
-    Функция принимает фид который необходимо спарсить.
-    Возвращает список индикаторов.
-    """
-    if not isinstance(feed, Feed):
-        raise Exception("Фид не был передан")
-    try:
-        raw_data = get_url(feed.link)
-    except:
-        raise Exception("Возникла ошибка при получении данных")
-    # try:
-    #     match feed.format_of_feed:
-    #         case "TXT":
-    #             result = parse_free_text(raw_data, feed)
-    #         case "XML":
-    #             result = parse_xml(raw_data, feed)
-    #         case "JSN":
-    #             result = parse_misp(raw_data, feed)
-    #         case "CSV":
-    #             result = parse_csv(raw_data, feed)
-    # except:
-    #     raise Exception("Возникла ошибка при обработке данных")
-    # return result
+# def parse_feed(feed):
+#     """
+#     Функция принимает фид который необходимо спарсить.
+#     Возвращает список индикаторов.
+#     """
+#     if not isinstance(feed, Feed):
+#         raise Exception("Фид не был передан")
+#     try:
+#         raw_data = get_url(feed.link)
+#     except:
+#         raise Exception("Возникла ошибка при получении данных")
+# try:
+#     match feed.format_of_feed:
+#         case "TXT":
+#             result = parse_free_text(raw_data, feed)
+#         case "XML":
+#             result = parse_xml(raw_data, feed)
+#         case "JSN":
+#             result = parse_misp(raw_data, feed)
+#         case "CSV":
+#             result = parse_csv(raw_data, feed)
+# except:
+#     raise Exception("Возникла ошибка при обработке данных")
+# return result
