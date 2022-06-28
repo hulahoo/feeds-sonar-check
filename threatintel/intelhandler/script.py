@@ -1,22 +1,19 @@
 from intelhandler.models import (
     Feed,
     Indicator,
-    MispEvent,
-    MispObject,
-    Attribute,
-    OrganizationContact,
     Tag,
 )
 from datetime import datetime, date
 from bs4 import BeautifulSoup
+from flatdict import FlatterDict
 import csv
 import requests
 import json
 
 
-def convert_csv_to_indicator(raw_indicators, feed):
-    fields = feed.field_names.split(",")
-    pass
+# def convert_csv_to_indicator(raw_indicators, feed):
+#     fields = feed.field_names.split(",")
+#     pass
 
 
 def convert_txt_to_indicator(raw_indicators, feed):
@@ -27,21 +24,12 @@ def convert_txt_to_indicator(raw_indicators, feed):
                 type=feed.type_of_feed,
                 value=raw_indicator,
                 weight=feed.confidence,
+                feeds=feed,
                 updated_date=datetime.now(),
             )
             complete_indicators.append(indicator)
             indicator.save()
         return complete_indicators
-
-
-def convert_attribute_to_indicator(attribute):
-    indicator = Indicator(
-        value=attribute.get("value"),
-        last_detected_date=date.fromtimestamp(attribute.get("timestamp")),
-        category=attribute.get("category"),
-        uuid=attribute.get("uuid"),
-    )
-    return indicator
 
 
 def convert_misp_to_indicator(raw_indicators, feed):
@@ -79,8 +67,18 @@ def parse_custom_json(raw_json, feed):
     """
     Парсит переданный кастомный json с выбранными из фида полями и отдает список индикаторов.
     """
-    
-    pass
+    indicators = []
+    for item in FlatterDict(raw_json).keys():
+        if item[0].rfind(feed.custom_field) != -1:
+            indicator = Indicator(
+                value=item[1],
+                supplier_name=feed.vendor,
+                weight=feed.confidence,
+                updated_date=datetime.now(),
+                feeds=feed,
+            )
+            indicators.append(indicator)
+    return indicators
 
 
 def get_url(url) -> str:
@@ -94,7 +92,7 @@ def get_url(url) -> str:
     return received_data
 
 
-def parse_stix(data_from_url):
+def parse_stix(data_from_url, feed):
     """
     Парсит переданный json в формате STIX и отдает список индикаторов.
     """
@@ -107,10 +105,11 @@ def parse_stix(data_from_url):
     indicators = []
     for raw_indicator in raw_indicators:
         indicator = Indicator(
-            # uuid=uuid.uuid5(),
+            # uuid=uuid.uuid5(), # TODO: Fix uuid creating with params
             value=raw_indicator.get("name"),
             first_detected_date=raw_indicator.get("created"),
             updated_date=raw_indicator.get("modified"),
+            feeds=feed,
         )
         pattern = raw_indicator.get("pattern")
         if "ip" in pattern:
@@ -163,6 +162,7 @@ def parse_misp(page_with_urls, feed) -> list:
         if ".json" in link.text:
             urls_for_parsing.append(f"{feed.link}{link.get('href')}")
     misp_events = parse_misp_event(urls_for_parsing, feed)
+
     return misp_events
 
 
@@ -174,45 +174,20 @@ def parse_xml(raw_indicators, feed) -> list:
     pass
 
 
-def parse_csv(raw_indicators, feed, fieldnames) -> list:  # не доделано
-    """
-    Парсит переданный текст с параметрами для csv и отдает список индикаторов.
-    """
-    raw_indicators = [
-        row for row in raw_indicators.split("\n") if not row.startswith("#")
-    ]
-    for row in csv.DictReader(
-        raw_indicators,
-        fieldnames=feed.field_names.split(","),
-        dialect="excel",
-    ):
-        print(row)
-
-    result = convert_csv_to_indicator(raw_indicators, feed)
-    pass
-
-
-# def parse_feed(feed):
+# TODO
+# def parse_csv(raw_indicators, feed, fieldnames) -> list:  # не доделано
 #     """
-#     Функция принимает фид который необходимо спарсить.
-#     Возвращает список индикаторов.
+#     Парсит переданный текст с параметрами для csv и отдает список индикаторов.
 #     """
-#     if not isinstance(feed, Feed):
-#         raise Exception("Фид не был передан")
-#     try:
-#         raw_data = get_url(feed.link)
-#     except:
-#         raise Exception("Возникла ошибка при получении данных")
-# try:
-#     match feed.format_of_feed:
-#         case "TXT":
-#             result = parse_free_text(raw_data, feed)
-#         case "XML":
-#             result = parse_xml(raw_data, feed)
-#         case "JSN":
-#             result = parse_misp(raw_data, feed)
-#         case "CSV":
-#             result = parse_csv(raw_data, feed)
-# except:
-#     raise Exception("Возникла ошибка при обработке данных")
-# return result
+#     raw_indicators = [
+#         row for row in raw_indicators.split("\n") if not row.startswith("#")
+#     ]
+#     for row in csv.DictReader(
+#         raw_indicators,
+#         fieldnames=feed.field_names.split(","),
+#         dialect="excel",
+#     ):
+#         print(row)
+
+#     result = convert_csv_to_indicator(raw_indicators, feed)
+#     pass
