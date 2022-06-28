@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED 1
 
 RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev \
-    && apk add --no-cache librdkafka librdkafka-dev
+    && apk add --no-cache librdkafka librdkafka-dev libxml2-dev libxslt-dev
 
 # install dependencies
 RUN pip install --upgrade pip

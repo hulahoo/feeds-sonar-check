@@ -7,3 +7,4 @@ beautifulsoup4==4.11.1
 confluent-kafka==1.8.2
 stix2-elevator
 stix2
+flatdict
