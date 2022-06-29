@@ -127,7 +127,6 @@ class Indicator(BaseModel):
         "Категория индикатора", max_length=128, blank=True, null=True
     )
     value = models.CharField("Значение индикатора", max_length=256)
-    updated_date = DateTimeField("Дата последнего обновления")
     weight = models.IntegerField(
         "Вес", validators=[MaxValueValidator(100), MinValueValidator(0)]
     )
@@ -266,6 +265,16 @@ class Indicator(BaseModel):
         verbose_name_plural = "Индикаторы"
 
 
+class ParsingRule(BaseModel):
+    """
+    Модель правила для парсинга (CSV)
+    """
+
+    class Meta:
+        verbose_name = "Правило парсинга"
+        verbose_name_plural = "Правила парсинга"
+
+
 class Feed(BaseModel):
     """
     Модель фида - источника данных.
@@ -362,6 +371,12 @@ class Feed(BaseModel):
     separator = models.CharField(
         "Разделитель для CSV формата", max_length=8, blank=True, null=True
     )
+    parsing_rules = models.ManyToManyField(
+        ParsingRule,
+        verbose_name="Правила для парсинга",
+        related_name="feed_parsing_rules",
+        blank=True,
+    )
     custom_field = models.CharField(
         "Кастомное поле", max_length=128, blank=True, null=True
     )
@@ -374,7 +389,7 @@ class Feed(BaseModel):
     )
     records_quantity = models.IntegerField("Количество записей", blank=True, null=True)
     indicators = models.ManyToManyField(
-        Indicator, related_name="feeds", verbose_name="Индикатор"
+        Indicator, related_name="feeds", verbose_name="Индикатор", blank=True
     )
 
     def __str__(self):
