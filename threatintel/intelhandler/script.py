@@ -10,6 +10,10 @@ from flatdict import FlatterDict
 import csv
 import requests
 import json
+from stix2elevator import elevate
+from stix2elevator.options import initialize_options, set_option_value
+
+initialize_options(options={"spec_version": "2.1"})
 
 
 def convert_txt_to_indicator(raw_indicators, feed):
@@ -63,7 +67,7 @@ def parse_stix(feed):
     """
     Парсит переданный json в формате STIX и отдает список индикаторов.
     """
-    bundle = json.loads(get_url(feed.link))
+    bundle = get_or_elevate(feed)
     objects = bundle.get("objects")
     raw_indicators = []
     for object in objects:
@@ -89,6 +93,17 @@ def parse_stix(feed):
             indicator.ioc_context_file_size = pattern
         indicators.append(indicator)
     return indicators
+
+
+def get_or_elevate(feed) -> dict:
+    """
+    Узнает версию stix и переводит во вторую версию.
+    """
+    text = get_url(feed.link)
+    try:
+        return json.loads(text)
+    except:
+        return elevate(text)
 
 
 def parse_free_text(raw_indicators, feed):
@@ -180,7 +195,7 @@ def parse_misp(feed) -> list:
     return misp_events
 
 
-def parse_csv(feed) -> list:
+def parse_csv(raw_indicators, feed) -> list:
     """
     Парсит переданный текст с параметрами для csv и отдает список индикаторов.
     """
@@ -189,10 +204,10 @@ def parse_csv(feed) -> list:
     ]
     indicators = []
     for row in csv.DictReader(
-        raw_indicators,
-        delimiter=feed.field_names.separator,
-        fieldnames=feed.field_names.split(","),
-        dialect="excel",
+            raw_indicators,
+            delimiter=feed.field_names.separator,
+            fieldnames=feed.field_names.split(","),
+            dialect="excel",
     ):
         indicator = Indicator(
             uuid=uuid4(),
