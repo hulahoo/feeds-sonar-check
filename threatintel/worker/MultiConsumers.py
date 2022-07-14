@@ -1,7 +1,10 @@
 import json
 
 from dagster import op, job, get_dagster_logger, Field, DynamicOut, DynamicOutput
-from django.conf import settings
+
+from worker.utils import django_init
+
+
 from kafka import KafkaConsumer, TopicPartition
 
 
@@ -22,14 +25,21 @@ def consumer_collector(data):
     return len(data)
 
 def event_worker(data:dict):
+    print('|||||||||||||||||||||||||||||||||||||||||')
+    print()
+    print()
+    print(data)
+    print()
+    print()
+    print('|||||||||||||||||||||||||||||||||||||||||')
     pass
 
 
 @op
 def op_consumer(context, partition: int):
     from worker.utils import django_init
-
     django_init()
+    from django.conf import settings
     logger = get_dagster_logger()
     group_id = settings.KAFKA_GROUP_ID
     kafka_ip = settings.KAFKA_IP
@@ -48,10 +58,12 @@ def op_consumer(context, partition: int):
     topic_partition = TopicPartition(topic, partition)
     topics = [topic_partition]
     kafka_consumer.assign(topics)
-    for tp, messages in tuple(kafka_consumer.poll(timeout_ms=5000).items()):
-        for message in messages:
-            data = json.loads(message.value)
-            event_worker(data)
+    while True:
+        for tp, messages in tuple(kafka_consumer.poll(timeout_ms=5000).items()):
+            for message in messages:
+                data = json.loads(message.value)
+                logger.info(f'{data}')
+                event_worker(data)
 
 
 @job

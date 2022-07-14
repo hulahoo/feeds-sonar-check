@@ -1,8 +1,12 @@
 import json
 from typing import List
 
-from django.conf import settings
 from kafka import KafkaProducer
+
+from worker.utils import django_init
+
+django_init()
+from django.conf import settings
 
 
 def json_serializer(data):
@@ -30,3 +34,9 @@ class MultiProducer:
     @classmethod
     def flush(cls, timeout=60 * 5):
         cls.producer.flush(timeout=timeout)
+
+
+if __name__ == '__main__':
+    print(settings.KAFKA_TOPIC, settings.KAFKA_IP)
+    MultiProducer.send_data({"WQE": 'QWW'})
+    MultiProducer.flush()

@@ -131,6 +131,6 @@ MEDIA_URL = "/media/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-KAFKA_GROUP_ID = ""
-KAFKA_TOPIC = ""
-KAFKA_IP = ""
+KAFKA_GROUP_ID = env("KAFKA_GROUP_ID","")
+KAFKA_TOPIC = env("KAFKA_TOPIC","")
+KAFKA_IP = env("KAFKA_IP","")
