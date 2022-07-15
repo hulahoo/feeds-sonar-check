@@ -38,5 +38,6 @@ class MultiProducer:
 
 if __name__ == '__main__':
     print(settings.KAFKA_TOPIC, settings.KAFKA_IP)
-    MultiProducer.send_data({"WQE": 'QWW'})
+    for i in range(1000):
+        MultiProducer.send_data({"WQE": 'QWW'})
     MultiProducer.flush()

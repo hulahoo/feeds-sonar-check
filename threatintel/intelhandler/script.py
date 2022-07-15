@@ -16,7 +16,7 @@ from stix2elevator.options import initialize_options, set_option_value
 initialize_options(options={"spec_version": "2.1"})
 
 
-def convert_txt_to_indicator(raw_indicators, feed):
+def convert_txt_to_indicator(feed, raw_indicators=None):
     if feed.format_of_feed == "TXT":
         complete_indicators = []
         for raw_indicator in raw_indicators:
@@ -31,7 +31,7 @@ def convert_txt_to_indicator(raw_indicators, feed):
         return complete_indicators
 
 
-def parse_custom_json(feed):
+def parse_custom_json(feed, raw_indicators=None):
     """
     Парсит переданный кастомный json с выбранными из фида полями и отдает список индикаторов.
     """
@@ -63,7 +63,7 @@ def get_url(url) -> str:
     return received_data
 
 
-def parse_stix(feed):
+def parse_stix(feed, raw_indicators=None):
     """
     Парсит переданный json в формате STIX и отдает список индикаторов.
     """
@@ -95,7 +95,7 @@ def parse_stix(feed):
     return indicators
 
 
-def get_or_elevate(feed) -> dict:
+def get_or_elevate(feed, raw_indicators=None) -> dict:
     """
     Узнает версию stix и переводит во вторую версию.
     """
@@ -106,7 +106,7 @@ def get_or_elevate(feed) -> dict:
         return elevate(text)
 
 
-def parse_free_text(raw_indicators, feed):
+def parse_free_text(feed, raw_indicators=None):
     """
     Парсит переданный текст и отдает список индикаторов.
     """
@@ -122,7 +122,7 @@ def parse_free_text(raw_indicators, feed):
     return result
 
 
-def convert_misp_to_indicator(raw_indicators, feed):
+def convert_misp_to_indicator(feed, raw_indicators=None):
     """
     Из MISP события и входящих в него параметров и объектов -
     импортирует список индиктаторов
@@ -178,7 +178,7 @@ def parse_misp_event(urls_for_parsing, feed):
     return indicators
 
 
-def parse_misp(feed) -> list:
+def parse_misp(feed, raw_indicators=None) -> list:
     """
     Парсит переданный текст со списком url'ок и отдает список индикаторов.
     Применяется когда по ссылке находится список json файлов.
@@ -195,7 +195,7 @@ def parse_misp(feed) -> list:
     return misp_events
 
 
-def parse_csv(raw_indicators, feed) -> list:
+def parse_csv(feed, raw_indicators=None) -> list:
     """
     Парсит переданный текст с параметрами для csv и отдает список индикаторов.
     """

@@ -1,12 +1,10 @@
 import json
 
-from dagster import op, job, get_dagster_logger, Field, DynamicOut, DynamicOutput
+from dagster import op, job, get_dagster_logger, Field, DynamicOut, DynamicOutput, repository
 
 from worker.utils import django_init
 
-
 from kafka import KafkaConsumer, TopicPartition
-
 
 
 @op(config_schema={'partitions': Field(list)}, out=DynamicOut())
@@ -24,15 +22,19 @@ def consumer_dispatcher_op(context):
 def consumer_collector(data):
     return len(data)
 
-def event_worker(data:dict):
-    print('|||||||||||||||||||||||||||||||||||||||||')
-    print()
-    print()
-    print(data)
-    print()
-    print()
-    print('|||||||||||||||||||||||||||||||||||||||||')
-    pass
+
+def event_worker(data: dict):
+    from worker.services import choose_type
+    from intelhandler.models import Feed
+
+    # feed: Feed()
+
+    # {"feed": {}, "type": "", "raw_indicators": []}
+
+    feed = Feed(**data["feed"])
+    method = choose_type(data['type'])
+    method(feed, data['raw_indicators'])
+
 
 
 @op
@@ -49,11 +51,6 @@ def op_consumer(context, partition: int):
         bootstrap_servers={f'{kafka_ip}:9092'},
         auto_offset_reset='earliest',
         group_id=group_id,
-        # enable_auto_commit=False,
-        # max_poll_records=500,
-        # max_poll_interval_ms=12 * 60_000,
-        # session_timeout_ms=1000 * 60 * 5,
-        # heartbeat_interval_ms=1000 * 60 * 5,
     )
     topic_partition = TopicPartition(topic, partition)
     topics = [topic_partition]
