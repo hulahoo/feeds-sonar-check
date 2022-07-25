@@ -1,9 +1,6 @@
 import json
 
-from dagster import op, job, get_dagster_logger, Field, DynamicOut, DynamicOutput, repository
-
-from worker.utils import django_init
-
+from dagster import op, job, get_dagster_logger, Field, DynamicOut, DynamicOutput
 from kafka import KafkaConsumer, TopicPartition
 
 
@@ -29,12 +26,12 @@ def event_worker(data: dict):
 
     # feed: Feed()
 
-    # {"feed": {}, "type": "", "raw_indicators": []}
+    # {"feed": {}, "type": "", "raw_indicators": [], "config": {}}
 
     feed = Feed(**data["feed"])
     method = choose_type(data['type'])
-    method(feed, data['raw_indicators'])
-
+    config = data.get('config', {})
+    method(feed, data['raw_indicators'], config)
 
 
 @op

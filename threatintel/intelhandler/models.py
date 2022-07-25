@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import DateTimeField
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 
 class CreationDateTimeField(DateTimeField):
@@ -64,6 +65,7 @@ class BaseModel(models.Model):
 
     created = CreationDateTimeField("создано")
     modified = ModificationDateTimeField("изменено")
+
     # origin = models.CharField("источник", max_length=128)
 
     class Meta:
@@ -391,6 +393,7 @@ class Feed(BaseModel):
     indicators = models.ManyToManyField(
         Indicator, related_name="feeds", verbose_name="Индикатор", blank=True
     )
+    ts = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.name}"

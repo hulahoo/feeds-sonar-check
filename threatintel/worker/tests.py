@@ -1,11 +1,25 @@
-import os
+import json
+import random
+from typing import List
 
-a=os.path.abspath(os.path.join(__file__, '..','..'))
-print(a)
+from kafka import KafkaProducer
 
+from worker.utils import django_init
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "threatintel.settings")
+django_init()
+from django.conf import settings
+from intelhandler.script import parse_stix
+from intelhandler.models import Feed
 
-import django
+if __name__ == '__main__':
+    req = {"feed": {
+        "link": 'https://raw.githubusercontent.com/davidonzo/Threat-Intel/master/stix2/01e05d0c2d5ee8b49a6a06ff623af7e1.json',
+        "confidence":1242432
 
-django.setup()
+    },
+        "type": "stix",
+        "raw_indicators": {"name":f"unique_name_{random.randint(0,1000)}"}
+    }
+    feed = Feed(**req['feed'])
+
+    parse_stix(feed,req['raw_indicators'])

@@ -36,8 +36,16 @@ class MultiProducer:
         cls.producer.flush(timeout=timeout)
 
 
-if __name__ == '__main__':
-    print(settings.KAFKA_TOPIC, settings.KAFKA_IP)
-    for i in range(1000):
-        MultiProducer.send_data({"WQE": 'QWW'})
-    MultiProducer.flush()
+# if __name__ == '__main__':
+    # def stix():
+    # req = {"feed": {
+    #     "url": 'https://raw.githubusercontent.com/davidonzo/Threat-Intel/master/stix2/01e05d0c2d5ee8b49a6a06ff623af7e1.json',
+    #
+    # },
+    #     "type": "stix",
+    #     "raw_indicators": []
+    # }
+    #
+    # print(settings.KAFKA_TOPIC, settings.KAFKA_IP)
+    # MultiProducer.send_data({"WQE": 'QWW'})
+    # MultiProducer.flush()
