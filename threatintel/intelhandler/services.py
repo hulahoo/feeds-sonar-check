@@ -1,4 +1,5 @@
 import json
+from uuid import uuid4
 
 import requests
 from stix2elevator import elevate
@@ -69,3 +70,26 @@ def convert_misp_to_indicator(feed, raw_indicators=None):
     except TypeError:
         pass
         return indicators
+
+
+def convert_txt_to_indicator(feed, raw_indicators=None):
+    if feed.format_of_feed == "TXT":
+        complete_indicators = []
+        feed.save()
+        for raw_indicator in raw_indicators:
+            indicator, created = Indicator.objects.get_or_create(value=raw_indicator,
+                                                                 defaults={
+                                                                     "uuid": uuid4(),
+                                                                     "supplier_name": feed.vendor,
+                                                                     "type": feed.type_of_feed,
+                                                                     "weight": feed.confidence,
+                                                                     "supplier_confidence": feed.confidence
+                                                                 })
+            # indicator = Indicator(
+            #     type=feed.type_of_feed,
+            #     value=raw_indicator,
+            #     weight=feed.confidence,
+            # )
+            indicator.feeds.add(feed)
+            complete_indicators.append(indicator)
+        return complete_indicators

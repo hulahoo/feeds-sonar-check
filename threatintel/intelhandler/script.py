@@ -9,49 +9,31 @@ from stix2elevator.options import initialize_options
 from intelhandler.models import (
     Indicator,
 )
-from intelhandler.services import parse_misp_event, get_url, get_or_elevate
+from intelhandler.services import parse_misp_event, get_url, get_or_elevate, convert_txt_to_indicator
 
 initialize_options(options={"spec_version": "2.1"})
 
 
-def convert_txt_to_indicator(feed, raw_indicators=None, config: dict = {}):
-    if feed.format_of_feed == "TXT":
-        complete_indicators = []
-        for raw_indicator in raw_indicators:
-            indicator, created = Indicator.objects.get_or_create(value=raw_indicator,
-                                                                 defaults={
-                                                                     "type": feed.type_of_feed,
-                                                                     "weight": feed.confidence
-                                                                 })
-            # indicator = Indicator(
-            #     type=feed.type_of_feed,
-            #     value=raw_indicator,
-            #     weight=feed.confidence,
-            # )
-            indicator.save()
-            indicator.feeds.add(feed)
-            complete_indicators.append(indicator)
-        return complete_indicators
 
 
 def parse_custom_json(feed, raw_indicators=None, config: dict = {}):
     """
     Парсит переданный кастомный json с выбранными из фида полями и отдает список индикаторов.
     """
+    feed.save()
     raw_json = json.loads(get_url(feed.link))
     indicators = []
     for key, value in FlatterDict(raw_json).items():
-        if key.rfind(feed.custom_field) != -1:
-            indicator, created = Indicator.objects.get_or_create(value=value, defaults={
-                "uuid": uuid4(),
-                "supplier_name": feed.vendor,
-                "supplier_confidence": feed.confidence,
-                "weight": feed.confidence
-            })
-            indicator.feeds.add(feed)
-            indicators.append(indicator)
+        # if key.rfind(feed.custom_field) != -1:
+        indicator, created = Indicator.objects.get_or_create(value=value, defaults={
+            "uuid": uuid4(),
+            "supplier_name": feed.vendor,
+            "supplier_confidence": feed.confidence,
+            "weight": feed.confidence
+        })
+        indicator.feeds.add(feed)
+        indicators.append(indicator)
     return indicators
-
 
 
 def parse_stix(feed, raw_indicators=None, config: dict = {}):
@@ -101,7 +83,7 @@ def parse_free_text(feed, raw_indicators=None, config: dict = {}):
     raw_indicators = [
         ioc.replace("\r", "") for ioc in raw_indicators if not ioc.startswith("#")
     ]
-    result = convert_txt_to_indicator(raw_indicators, feed)
+    result = convert_txt_to_indicator(feed, raw_indicators)
     return result
 
 
@@ -127,10 +109,11 @@ def parse_csv(feed, raw_indicators=None, config: dict = {}) -> list:
         row for row in raw_indicators.split("\n") if not row.startswith("#")
     ]
     indicators = []
+    feed.save()
     for row in csv.DictReader(
             raw_indicators,
-            delimiter=config.get('delimiter', feed.field_names.separator),
-            fieldnames=config.get('fieldnames', feed.field_names.split(",")),
+            delimiter=config.get('delimiter', ","),
+            fieldnames=config.get('fieldnames', ""),
             dialect=config.get('dialect', "excel"),
     ):
         indicator, created = Indicator.objects.get_or_create(value=row.get(feed.custom_field), defaults={
@@ -139,6 +122,6 @@ def parse_csv(feed, raw_indicators=None, config: dict = {}) -> list:
             "supplier_confidence": feed.confidence,
             "weight": feed.confidence
         })
-        indicator.save()
+        # indicator.save()
         indicator.feeds.add(feed)
     return indicators

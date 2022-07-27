@@ -1,10 +1,17 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from worker.services import choose_type
 from .forms import FeedForm
 from confluent_kafka import Consumer, Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
 # Create your views here.
+from .models import Feed
+
+
 def feed_add(request):
     if request.method == "POST":
         form = FeedForm(request.POST)
@@ -15,6 +22,15 @@ def feed_add(request):
         form = FeedForm()
     return render(request, "form_add.html", {"form": form})
 
+
+@api_view(["POST"])
+def feed_create(request):
+    data = request.data
+    feed = Feed(**data["feed"])
+    method = choose_type(data['type'])
+    config = data.get('config', {})
+    results = method(feed, data['raw_indicators'], config)
+    return Response({'results': results})
 
 # def delivery_report(err, msg):
 #     """Called once for each message produced to indicate delivery result.
