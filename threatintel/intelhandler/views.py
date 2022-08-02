@@ -1,15 +1,22 @@
+import django_filters
 from django.shortcuts import render
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, viewsets
+from django_filters import rest_framework as filters
 from rest_framework.decorators import api_view
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from worker.services import choose_type
+from .filters import IndicatorFilter, FeedFilter
 from .forms import FeedForm
 from confluent_kafka import Consumer, Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
 # Create your views here.
-from .models import Feed
+from .models import Feed, Indicator
+from .serializers import IndicatorSerializer, FeedSerializer, IndicatorWithFeedsSerializer
 
 
 def feed_add(request):
@@ -32,45 +39,24 @@ def feed_create(request):
     results = method(feed, data['raw_indicators'], config)
     return Response({'results': results})
 
-# def delivery_report(err, msg):
-#     """Called once for each message produced to indicate delivery result.
-#     Triggered by poll() or flush()."""
-#     if err is not None:
-#         print("Message delivery failed: {}".format(err))
-#     else:
-#         print("Message delivered to {} [{}]".format(msg.topic(), msg.partition()))
+
+class IndicatorListView(viewsets.ModelViewSet):
+    queryset = Indicator.objects.all()
+    serializer_class = IndicatorSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = IndicatorFilter
 
 
-# data = '{"kek": "wait"}'
+class FeedListView(viewsets.ModelViewSet):
+    queryset = Feed.objects.all()
+    serializer_class = FeedSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = FeedFilter
 
 
-# def add_to_query(request):
-#     p = Producer({"bootstrap.servers": "broker"})
-#     p.produce("threatintel", data.encode("utf-8"), callback=delivery_report)
-#     p.flush()
-#     return HttpResponse(200)
-
-
-# def read_from_query(request):
-
-#     c = Consumer(
-#         {
-#             "bootstrap.servers": "broker:9092",
-#             "group.id": "mygroup",
-#             "auto.offset.reset": "earliest",
-#         }
-#     )
-
-#     c.subscribe(["threatintel"])
-
-#     while True:
-#         msg = c.poll(1.0)
-
-#         if msg is None:
-#             continue
-#         if msg.error():
-#             print("Consumer error: {}".format(msg.error()))
-#             continue
-#         print("Received message: {}".format(msg.value().decode("utf-8")))
-#         c.close()
-#         return HttpResponse(200)
+class Dashboard(viewsets.ModelViewSet):
+    pagination_class = PageNumberPagination
+    serializer_class = IndicatorWithFeedsSerializer
+    queryset = Indicator.objects.all().prefetch_related('feeds')
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = IndicatorFilter

@@ -1,9 +1,14 @@
 from django.urls import path
+from rest_framework import routers
+
 from . import views
 
-urlpatterns = [
+router = routers.SimpleRouter()
+router.register(r'indicators', views.IndicatorListView)
+router.register(r'feeds', views.FeedListView)
+router.register(r'dashboard', views.Dashboard)
+urlpatterns = router.urls
+urlpatterns += [
     path("new/", views.feed_add, name="feed_add"),
-    path('feed_create/', views.feed_create, name="feed_create")
-    # path("add/", views.add_to_query, name="add_to_query"),
-    # path("from/", views.read_from_query, name="read_from_query"),
+    path('feed_create/', views.feed_create, name="feed_create"),
 ]

@@ -1,7 +1,21 @@
+import audioop
+
 from django.db import models
 from django.db.models import DateTimeField
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+
+CSV_FILE = "CSV"
+JSON_FILE = "JSN"
+XML_FILE = "XML"
+TXT_FILE = "TXT"
+
+FORMAT_OF_FEED_CHOICES = [
+    (CSV_FILE, "CSV формат"),
+    (JSON_FILE, "JSON формат"),
+    (XML_FILE, "XML формат"),
+    (TXT_FILE, "TXT формат"),
+]
 
 
 class CreationDateTimeField(DateTimeField):
@@ -262,6 +276,15 @@ class Indicator(BaseModel):
     def __str__(self):
         return f"{self.value}"
 
+    @classmethod
+    def get_model_fields(cls):
+        # return [i.attname for i in cls._meta.fields]
+        return cls.get_models_fields_with_lookup_expr()
+
+    @classmethod
+    def get_models_fields_with_lookup_expr(cls):
+        return {i.attname: list(i.class_lookups.keys()) for i in cls._meta.fields}
+
     class Meta:
         verbose_name = "Индикатор"
         verbose_name_plural = "Индикаторы"
@@ -294,11 +317,6 @@ class Feed(BaseModel):
     FILENAME = "FILE"
     REGISTRY = "REGS"
 
-    CSV_FILE = "CSV"
-    JSON_FILE = "JSN"
-    XML_FILE = "XML"
-    TXT_FILE = "TXT"
-
     NO_AUTH = "NAU"
     API = "API"
     BASIC = "BSC"
@@ -323,12 +341,7 @@ class Feed(BaseModel):
         (URL, "Full URL's"),
         (DOMAIN, "Domain's"),
     ]
-    FORMAT_OF_FEED_CHOICES = [
-        (CSV_FILE, "CSV формат"),
-        (JSON_FILE, "JSON формат"),
-        (XML_FILE, "XML формат"),
-        (TXT_FILE, "TXT формат"),
-    ]
+
     TYPE_OF_AUTH_CHOICES = [
         (NO_AUTH, "Отсуствует"),
         (API, "API token"),
@@ -398,6 +411,12 @@ class Feed(BaseModel):
     def __str__(self):
         return f"{self.name}"
 
+    @classmethod
+    def get_model_fields(cls):
+        return [i.attname for i in cls._meta.fields]
+
     class Meta:
         verbose_name = "Фид"
         verbose_name_plural = "Фиды"
+
+

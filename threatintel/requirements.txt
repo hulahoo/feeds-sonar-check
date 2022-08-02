@@ -11,3 +11,4 @@ flatdict
 dagster
 kafka-python
 dagit
+django-filter

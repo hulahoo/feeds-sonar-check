@@ -9,9 +9,21 @@ from worker.utils import django_init
 django_init()
 from django.conf import settings
 from intelhandler.script import parse_stix, parse_misp, parse_free_text, parse_csv
-from intelhandler.models import Feed
+from intelhandler.models import Feed, Indicator
+from intelhandler.serializers import IndicatorWithFeedsSerializer
+
 
 if __name__ == '__main__':
+    django_init()
+    d=Indicator.get_models_fields_with_lookup_expr()
+    # a=Indicator.objects.prefetch_related('feeds')
+    # a = Indicator.objects.filter().prefetch_related('feeds')
+    # ser = IndicatorWithFeedsSerializer(a,many=True)
+    # d = (ser.data)
+    print(d)
+
+
+
     def stix():
         req = {"feed": {
             "link": 'https://raw.githubusercontent.com/davidonzo/Threat-Intel/master/stix2/04485fad82d561bffe7e83dd47d81d7f.json',
@@ -75,7 +87,7 @@ if __name__ == '__main__':
         parse_csv(feed, req['raw_indicators'])
 
 
-    stix()
-    misp()
-    free_text()
-    csv()
+    # stix()
+    # misp()
+    # free_text()
+    # csv()
