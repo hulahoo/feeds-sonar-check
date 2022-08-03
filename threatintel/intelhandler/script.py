@@ -9,21 +9,27 @@ from stix2elevator.options import initialize_options
 from intelhandler.models import (
     Indicator,
 )
-from intelhandler.services import parse_misp_event, get_url, get_or_elevate, convert_txt_to_indicator
+from intelhandler.services import parse_misp_event, get_url, get_or_elevate, convert_txt_to_indicator, feed_control
 
 initialize_options(options={"spec_version": "2.1"})
-
-
 
 
 def parse_custom_json(feed, raw_indicators=None, config: dict = {}):
     """
     Парсит переданный кастомный json с выбранными из фида полями и отдает список индикаторов.
     """
-    feed.save()
+    limit = config.get('limit', None)
+
+    feed_control(feed, config)
     raw_json = json.loads(get_url(feed.link))
     indicators = []
-    for key, value in FlatterDict(raw_json).items():
+
+    if limit:
+        lst = list(FlatterDict(raw_json).items())[:limit]
+    else:
+        lst = list(FlatterDict(raw_json).items())
+
+    for key, value in lst:
         # if key.rfind(feed.custom_field) != -1:
         indicator, created = Indicator.objects.get_or_create(value=value, defaults={
             "uuid": uuid4(),
@@ -40,14 +46,21 @@ def parse_stix(feed, raw_indicators=None, config: dict = {}):
     """
     Парсит переданный json в формате STIX и отдает список индикаторов.
     """
+
+    limit = config.get('limit', None)
+
     bundle = get_or_elevate(feed)
     objects = bundle.get("objects")
     raw_indicators = []
+
+    if limit:
+        objects = list(objects)[:limit]
+
     for object in objects:
         if object.get("type") == "indicator":
             raw_indicators.append(object)
     indicators = []
-    feed.save()
+    feed_control(feed, config)
     for raw_indicator in raw_indicators:
         indicator, created = Indicator.objects.get_or_create(value=raw_indicator.get("name"),
                                                              defaults={
@@ -75,6 +88,8 @@ def parse_free_text(feed, raw_indicators=None, config: dict = {}):
     """
     Парсит переданный текст и отдает список индикаторов.
     """
+    limit = config.get('limit', None)
+
     raw_indicators = raw_indicators.split("\n")
     try:
         raw_indicators.remove("")
@@ -83,6 +98,10 @@ def parse_free_text(feed, raw_indicators=None, config: dict = {}):
     raw_indicators = [
         ioc.replace("\r", "") for ioc in raw_indicators if not ioc.startswith("#")
     ]
+
+    if limit:
+        raw_indicators = raw_indicators[:limit]
+
     result = convert_txt_to_indicator(feed, raw_indicators)
     return result
 
@@ -92,9 +111,16 @@ def parse_misp(feed, raw_indicators=None, config: dict = {}) -> list:
     Парсит переданный текст со списком url'ок и отдает список индикаторов.
     Применяется когда по ссылке находится список json файлов.
     """
+    limit = config.get('limit', None)
+
     parsed_page = BeautifulSoup(get_url(feed.link), "html.parser")
     urls_for_parsing = []
-    for link in list(parsed_page.find_all("a")):
+
+    links = list(parsed_page.find_all("a"))
+    if limit:
+        links = links[:limit]
+
+    for link in links:
         if ".json" in link.text:
             urls_for_parsing.append(f"{feed.link}{link.get('href')}")
     misp_events = parse_misp_event(urls_for_parsing, feed)
@@ -105,11 +131,16 @@ def parse_csv(feed, raw_indicators=None, config: dict = {}) -> list:
     """
     Парсит переданный текст с параметрами для csv и отдает список индикаторов.
     """
+    limit = config.get('limit', None)
+
     raw_indicators = [
         row for row in raw_indicators.split("\n") if not row.startswith("#")
     ]
     indicators = []
-    feed.save()
+    feed_control(feed, config)
+
+    counter = 0
+
     for row in csv.DictReader(
             raw_indicators,
             delimiter=config.get('delimiter', ","),
@@ -124,4 +155,9 @@ def parse_csv(feed, raw_indicators=None, config: dict = {}) -> list:
         })
         # indicator.save()
         indicator.feeds.add(feed)
+
+        counter += 1
+        if counter >= limit:
+            break
+
     return indicators

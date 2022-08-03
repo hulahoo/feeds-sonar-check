@@ -5,7 +5,8 @@ methods = {
     "stix": parse_stix,
     "free_text": parse_free_text,
     "misp": parse_misp,
-    "csv": parse_csv
+    "csv": parse_csv,
+    "txt":parse_free_text
 }
 
 

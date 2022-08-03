@@ -5,17 +5,7 @@ from django.db.models import DateTimeField
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
-CSV_FILE = "CSV"
-JSON_FILE = "JSN"
-XML_FILE = "XML"
-TXT_FILE = "TXT"
-
-FORMAT_OF_FEED_CHOICES = [
-    (CSV_FILE, "CSV формат"),
-    (JSON_FILE, "JSON формат"),
-    (XML_FILE, "XML формат"),
-    (TXT_FILE, "TXT формат"),
-]
+from intelhandler.constants import *
 
 
 class CreationDateTimeField(DateTimeField):
@@ -108,30 +98,6 @@ class Indicator(BaseModel):
     """
     Модель индикатора.
     """
-
-    EMAIL_FROM = "FEMA"
-    EMAIL_SUBJECT = "SEMA"
-    MD5_HASH = "MD5H"
-    SHA1_HASH = "SHA1"
-    SHA256_HASH = "SHA2"
-    IP = "IPAD"
-    URL = "URLS"
-    DOMAIN = "DOMN"
-    FILENAME = "FILE"
-    REGISTRY = "REGS"
-
-    TYPE_OF_INDICATOR_CHOICES = [
-        (EMAIL_FROM, "Email's origin"),
-        (EMAIL_SUBJECT, "Email's subject"),
-        (MD5_HASH, "File hashe MD5"),
-        (SHA1_HASH, "File hashe SHA1"),
-        (SHA256_HASH, "File hashe SHA256"),
-        (FILENAME, "File name"),
-        (REGISTRY, "Registry"),
-        (IP, "IP adresses"),
-        (URL, "Full URL's"),
-        (DOMAIN, "Domain's"),
-    ]
 
     type = models.CharField(
         "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
@@ -273,16 +239,14 @@ class Indicator(BaseModel):
     )
     ioc_context_whois_updated = models.CharField(max_length=64, blank=True, null=True)
 
+    # время жизни
+    ttl = models.DateTimeField("Дата удаления", blank=True, null=True, default=None)
+
     def __str__(self):
         return f"{self.value}"
 
     @classmethod
     def get_model_fields(cls):
-        # return [i.attname for i in cls._meta.fields]
-        return cls.get_models_fields_with_lookup_expr()
-
-    @classmethod
-    def get_models_fields_with_lookup_expr(cls):
         return {i.attname: list(i.class_lookups.keys()) for i in cls._meta.fields}
 
     class Meta:
@@ -305,64 +269,11 @@ class Feed(BaseModel):
     Модель фида - источника данных.
     """
 
-    MISP = "MISP"
-    EMAIL_FROM = "FEMA"
-    EMAIL_SUBJECT = "SEMA"
-    MD5_HASH = "MD5H"
-    SHA1_HASH = "SHA1"
-    SHA256_HASH = "SHA2"
-    IP = "IPAD"
-    URL = "URLS"
-    DOMAIN = "DOMN"
-    FILENAME = "FILE"
-    REGISTRY = "REGS"
-
-    NO_AUTH = "NAU"
-    API = "API"
-    BASIC = "BSC"
-    NEVER = "NVR"
-    THIRTY_MINUTES = "M30"
-    ONE_HOUR = "HR1"
-    TWO_HOURS = "HR2"
-    FOUR_HOURS = "HR4"
-    EIGHT_HOURS = "HR8"
-    SIXTEEN_HOURS = "H16"
-    TWENTY_FOUR_HOURS = "H24"
-
-    TYPE_OF_FEED_CHOICES = [
-        (EMAIL_FROM, "Email's origin"),
-        (EMAIL_SUBJECT, "Email's subject"),
-        (MD5_HASH, "File hashe MD5"),
-        (SHA1_HASH, "File hashe SHA1"),
-        (SHA256_HASH, "File hashe SHA256"),
-        (FILENAME, "File name"),
-        (REGISTRY, "Registry"),
-        (IP, "IP adresses"),
-        (URL, "Full URL's"),
-        (DOMAIN, "Domain's"),
-    ]
-
-    TYPE_OF_AUTH_CHOICES = [
-        (NO_AUTH, "Отсуствует"),
-        (API, "API token"),
-        (BASIC, "HTTP basic"),
-    ]
-    POLLING_FREQUENCY_CHOICES = [
-        (NEVER, "Никогда"),
-        (THIRTY_MINUTES, "30 минут"),
-        (ONE_HOUR, "1 час"),
-        (TWO_HOURS, "2 часа"),
-        (FOUR_HOURS, "4 часа"),
-        (EIGHT_HOURS, "8 часов"),
-        (SIXTEEN_HOURS, "16 часов"),
-        (TWENTY_FOUR_HOURS, "24 часа"),
-    ]
-
     type_of_feed = models.CharField(
         "Тип фида", max_length=4, choices=TYPE_OF_FEED_CHOICES, default=IP
     )
     format_of_feed = models.CharField(
-        "Формат фида", max_length=3, choices=FORMAT_OF_FEED_CHOICES, default=TXT_FILE
+        "Формат фида", max_length=15, choices=FORMAT_OF_FEED_CHOICES, default=TXT_FILE
     )
     auth_type = models.CharField(
         "Тип авторизации", max_length=3, choices=TYPE_OF_AUTH_CHOICES, default=NO_AUTH
@@ -398,7 +309,7 @@ class Feed(BaseModel):
     sertificate = models.FileField("Файл сертификат", blank=True, null=True)
     vendor = models.CharField("Вендор", max_length=32)
     name = models.CharField("Название фида", max_length=32, unique=True)
-    link = models.CharField("Ссылка на фид", max_length=100)
+    link = models.CharField("Ссылка на фид", max_length=255)
     confidence = models.IntegerField(
         "Достоверность", validators=[MaxValueValidator(100), MinValueValidator(0)]
     )
@@ -406,7 +317,12 @@ class Feed(BaseModel):
     indicators = models.ManyToManyField(
         Indicator, related_name="feeds", verbose_name="Индикатор", blank=True
     )
+
+    update_status = models.CharField(max_length=15, choices=TYPE_OF_STATUS_UPDATE, default=ENABLED)
+
     ts = models.DateTimeField(auto_now_add=True)
+
+    source = models.ForeignKey("Source", on_delete=models.SET_NULL, null=True, default=None)
 
     def __str__(self):
         return f"{self.name}"
@@ -420,3 +336,34 @@ class Feed(BaseModel):
         verbose_name_plural = "Фиды"
 
 
+class Source(BaseModel):
+    name = models.CharField(max_length=255, unique=True)
+    is_instead_full = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    provider_name = models.CharField(max_length=255)
+    path = models.TextField()
+    certificate = models.FileField("Путь к сертификату", blank=True, null=True)
+    authenticity = models.IntegerField(
+        "Достоверность", validators=[MaxValueValidator(100), MinValueValidator(0)],
+        default=0
+    )
+    format = models.CharField(
+        "Формат", max_length=15, choices=TYPE_OF_FORMAT, default=CSV
+    )
+
+    auth_type = models.CharField(
+        "Тип авторизации", max_length=3, choices=TYPE_OF_AUTH_CHOICES, default=NO_AUTH
+    )
+    auth_login = models.CharField(
+        "Логин для авторизации", max_length=32, blank=True, null=True
+    )
+    auth_password = models.CharField(
+        "Пароль для авторизации", max_length=64, blank=True, null=True
+    )
+
+    max_rows = models.IntegerField(default=None, null=True)
+    raw_indicators = models.TextField(default=None, null=True)
+
+    class Meta:
+        verbose_name = 'Источник'
+        verbose_name_plural = 'Источники'
