@@ -1,11 +1,13 @@
 import audioop
 
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.db.models import DateTimeField
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
 from intelhandler.constants import *
+from django.contrib.auth.models import PermissionsMixin, UserManager as DjangoUserManager
 
 
 class CreationDateTimeField(DateTimeField):
@@ -77,6 +79,17 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class User(BaseModel, AbstractBaseUser, PermissionsMixin):
+    username = models.CharField(unique=True, max_length=255)
+
+    @property
+    def is_staff(self):
+        return self.is_superuser
+
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = []
+
+
 class Tag(BaseModel):
     """
     Модель тега.
@@ -112,7 +125,7 @@ class Indicator(BaseModel):
     weight = models.IntegerField(
         "Вес", validators=[MaxValueValidator(100), MinValueValidator(0)]
     )
-    tag = models.ManyToManyField(Tag, "Теги")
+    tag = models.ManyToManyField(Tag, "tags")
     false_detected = models.IntegerField(
         "счетчик ложных срабатываний", validators=[MinValueValidator(0)], default=0
     )
@@ -368,3 +381,14 @@ class Source(BaseModel):
     class Meta:
         verbose_name = 'Источник'
         verbose_name_plural = 'Источники'
+
+
+class ActivityType(BaseModel):
+    name = models.CharField(max_length=255)
+
+
+class Activity(BaseModel):
+    indicator = models.ForeignKey('Indicator', on_delete=models.CASCADE)
+    activity_type = models.ForeignKey('ActivityType', on_delete=models.DO_NOTHING)
+    comment = models.TextField()
+    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, default=None)
