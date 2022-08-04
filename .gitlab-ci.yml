@@ -1,0 +1,41 @@
+services:
+  - docker:20.10.7-dind
+stages:
+  - test
+  - deploy
+
+test:
+  image: python:3.8-slim-buster
+  stage: test
+  before_script:
+    - |
+      apt-get update && apt-get install -y --no-install-recommends \
+      gcc \
+      musl-dev \
+      python3-dev \
+      libpq-dev \
+      libgnutls28-dev \
+      git \
+      && rm -rf /var/lib/apt/lists/*
+    - python -m pip install --upgrade pip
+    - pip install uwsgi
+    - pip install -r threatintel/requirements.txt
+    - echo $TEST_SECRETS | base64 -d > config/settings/local.py
+  script:
+    - echo RUNNING UNIT TESTS
+    - coverage run threatintel/manage.py test && coverage report
+  environment: test
+
+docker-build:
+  stage: build
+  script:
+    - docker-compose -f docker-compose.prod.yml build
+run:
+  stage: deploy
+  script:
+    - docker-compose -f docker-compose.prod.yml pull
+    - docker-compose -f docker-compose.prod.yml stop
+    - docker-compose -f docker-compose.prod.yml rm -f
+    - docker-compose -f docker-compose.prod.yml up -d
+
+
