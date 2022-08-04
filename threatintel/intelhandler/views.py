@@ -15,8 +15,8 @@ from confluent_kafka import Consumer, Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
 # Create your views here.
-from .models import Feed, Indicator
-from .serializers import IndicatorSerializer, FeedSerializer, IndicatorWithFeedsSerializer
+from .models import Feed, Indicator, Source
+from .serializers import IndicatorSerializer, FeedSerializer, IndicatorWithFeedsSerializer, SourceSerializer
 
 
 def feed_add(request):
@@ -60,3 +60,8 @@ class Dashboard(viewsets.ModelViewSet):
     queryset = Indicator.objects.all().prefetch_related('feeds')
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = IndicatorFilter
+
+
+class SourceView(viewsets.ModelViewSet):
+    serializer_class = SourceSerializer
+    queryset = Source.objects.all()

@@ -39,7 +39,7 @@ def parse_misp_event(urls_for_parsing, feed):
     return indicators
 
 
-def convert_misp_to_indicator(feed, raw_indicators=None):
+def  convert_misp_to_indicator(feed, raw_indicators=None):
     """
     Из MISP события и входящих в него параметров и объектов -
     импортирует список индиктаторов

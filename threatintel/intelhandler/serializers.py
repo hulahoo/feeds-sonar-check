@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Indicator, Feed
+from .models import Indicator, Feed, Source
 
 
 class IndicatorSerializer(serializers.ModelSerializer):
@@ -11,6 +11,12 @@ class IndicatorSerializer(serializers.ModelSerializer):
 class FeedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feed
+        exclude = []
+
+
+class SourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Source
         exclude = []
 
 

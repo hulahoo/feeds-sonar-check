@@ -42,7 +42,6 @@ def get_sources():
     from intelhandler.models import Source
 
     for index, obj in enumerate(list(Source.objects.all())):
-        print('_____OBJ', obj, index)
         yield DynamicOutput(value=(index, obj.id), mapping_key=f'{index}'.replace('.', '_'))
 
 
@@ -76,15 +75,6 @@ def op_source_downloads_worker(context, data):
         }
     }
     feed = Feed(**feed_raw["feed"])
-    if obj.is_instead_full:
-        Feed.objects.filter(name=feed.name).delete()
-        feed.save()
-    else:
-        feed_exist = Feed.objects.filter(name=feed.name).first()
-
-    # else:
-    #     feed_temp = Feed.objects.filter(name=feed.name).first()
-    #     if feed_temp is not None:
 
     method = choose_type(obj.format.lower())
     config = feed_raw.get('config', {})

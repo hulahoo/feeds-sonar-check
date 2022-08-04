@@ -30,7 +30,6 @@ def parse_custom_json(feed, raw_indicators=None, config: dict = {}):
         lst = list(FlatterDict(raw_json).items())
 
     for key, value in lst:
-        # if key.rfind(feed.custom_field) != -1:
         indicator, created = Indicator.objects.get_or_create(value=value, defaults={
             "uuid": uuid4(),
             "supplier_name": feed.vendor,
@@ -56,15 +55,16 @@ def parse_stix(feed, raw_indicators=None, config: dict = {}):
     if limit:
         objects = list(objects)[:limit]
 
-    for object in objects:
-        if object.get("type") == "indicator":
-            raw_indicators.append(object)
+    for obj in objects:
+        if obj.get("type") == "indicator":
+            raw_indicators.append(obj)
+
     indicators = []
     feed_control(feed, config)
     for raw_indicator in raw_indicators:
         indicator, created = Indicator.objects.get_or_create(value=raw_indicator.get("name"),
                                                              defaults={
-                                                                 "uuid": uuid4(),
+                                                                 "uuid": raw_indicator.get('id', uuid4()),
                                                                  "first_detected_date": raw_indicator.get("created"),
                                                                  "supplier_name": feed.vendor,
                                                                  "supplier_confidence": feed.confidence,
@@ -131,7 +131,7 @@ def parse_csv(feed, raw_indicators=None, config: dict = {}) -> list:
     """
     Парсит переданный текст с параметрами для csv и отдает список индикаторов.
     """
-    limit = config.get('limit', None)
+    limit = config.get('limit', 0)
 
     raw_indicators = [
         row for row in raw_indicators.split("\n") if not row.startswith("#")
@@ -153,11 +153,10 @@ def parse_csv(feed, raw_indicators=None, config: dict = {}) -> list:
             "supplier_confidence": feed.confidence,
             "weight": feed.confidence
         })
-        # indicator.save()
         indicator.feeds.add(feed)
 
         counter += 1
-        if counter >= limit:
+        if counter >= limit > 0:
             break
 
     return indicators

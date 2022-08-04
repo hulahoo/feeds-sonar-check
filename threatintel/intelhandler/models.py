@@ -103,7 +103,7 @@ class Indicator(BaseModel):
         "Тип индикатора", max_length=4, choices=TYPE_OF_INDICATOR_CHOICES, default=IP
     )
     uuid = models.CharField(
-        "Уникальный идентификатор индикатора", unique=True, max_length=36
+        "Уникальный идентификатор индикатора", unique=True, max_length=255
     )
     category = models.CharField(
         "Категория индикатора", max_length=128, blank=True, null=True
@@ -363,6 +363,7 @@ class Source(BaseModel):
 
     max_rows = models.IntegerField(default=None, null=True)
     raw_indicators = models.TextField(default=None, null=True)
+    update_time_period = models.PositiveBigIntegerField(default=0)
 
     class Meta:
         verbose_name = 'Источник'
