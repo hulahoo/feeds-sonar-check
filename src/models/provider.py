@@ -13,6 +13,20 @@ class FeedProvider:
             db.refresh(feed)
             return feed
 
+    def save(self, *, feed: Feed) -> Feed:
+        with SyncPostgresDriver().session() as db:
+
+            db.add(feed)
+            db.flush()
+            db.commit()
+            db.refresh(feed)
+            return feed
+
+    def read(self, feed_name: str):
+        with SyncPostgresDriver().session() as db:
+            sources = db.query(Feed).filter(Feed.name == feed_name).first()
+            return sources
+
     def delete(self, feed_name: str):
         with SyncPostgresDriver().session() as db:
             db.query(Feed).filter(Feed.name == feed_name).delete()
@@ -47,7 +61,27 @@ class IndicatorProvider:
             db.refresh(indicator)
             return indicator
 
-    def read_by_value(self, **kwargs):
+    def save(self, *, indicator: Indicator) -> Indicator:
         with SyncPostgresDriver().session() as db:
-            sources = db.query(Indicator)filter_by(**kwargs).first()
+
+            db.add(indicator)
+            db.flush()
+            db.commit()
+            db.refresh(indicator)
+            return indicator
+
+    def load_feed_relationship(self, indicator, data_to_create: dict):
+        with SyncPostgresDriver().session() as db:
+            feed = Feed(**data_to_create)
+
+            indicator.feeds.append(feed)
+            db.add(indicator)
+            db.flush()
+            db.commit()
+            db.refresh(indicator)
+            return indicator
+
+    def read_by_values(self, **kwargs):
+        with SyncPostgresDriver().session() as db:
+            sources = db.query(Indicator).filter_by(**kwargs).first()
             return sources

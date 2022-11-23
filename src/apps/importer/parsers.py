@@ -11,6 +11,8 @@ from stix2elevator import elevate
 
 from src.commons.enums import FeedFormatEnum
 from src.models.models import Feed, Indicator
+from src.models.services import (add_feed_to_indicator, delete_feed, get_feed,
+                                 get_or_create, save_feed, save_indicator)
 
 
 def get_url(url) -> str:
@@ -63,17 +65,18 @@ def convert_misp_to_indicator(feed, raw_indicators=None):
     attributes_list = [*attributes, *attribute_in_object]
     try:
         for attribute in attributes_list:
-            # TODO Переделать Indicator.objects.get_or_create (https://stackoverflow.com/questions/2546207/does-sqlalchemy-have-an-equivalent-of-djangos-get-or-create)
-            indicator, created = Indicator.objects.get_or_create(value=attribute.get('value'), defaults={
+            value = attribute.get('value')
+            defaults = {
                 "uuid": attribute.get("uuid"),
                 "ioc_context_type": attribute.get("type"),
                 "supplier_name": feed.vendor,
                 "supplier_confidence": feed.confidence,
                 "weight": feed.confidence
-            })
+            }
+            indicator = get_or_create(Indicator, value, defaults)
 
             try:
-                indicator.feeds.add(feed)
+                indicator = add_feed_to_indicator(indicator, feed)
                 indicators.append(indicator)
             except Exception as e:
                 logger.exception(f"Error adding feed to indicator: {e}")
@@ -87,36 +90,37 @@ def convert_txt_to_indicator(feed, raw_indicators=None):
         complete_indicators = []
         feed.save()
         for raw_indicator in raw_indicators:
-            indicator, created = Indicator.objects.get_or_create(value=raw_indicator,
-                                                                 defaults={
-                                                                     "uuid": uuid4(),
-                                                                     "supplier_name": feed.vendor,
-                                                                     "type": feed.type_of_feed,
-                                                                     "weight": feed.confidence,
-                                                                     "supplier_confidence": feed.confidence
-                                                                 })
+            defaults = {
+                "uuid": uuid4(),
+                "supplier_name": feed.vendor,
+                "type": feed.type_of_feed,
+                "weight": feed.confidence,
+                "supplier_confidence": feed.confidence
+            }
 
-            indicator.feeds.add(feed)
+            indicator = get_or_create(Indicator, raw_indicator, defaults)
+            indicator = add_feed_to_indicator(indicator, feed)
             complete_indicators.append(indicator)
         return complete_indicators
 
 
 def feed_control(feed, config):
-    fields = ['type_of_feed', 'format_of_feed', 'auth_type', 'polling_frequency', 'auth_login', 'auth_password',
-              'ayth_querystring', 'separator', 'custom_field', 'sertificate', 'vendor', 'name', 'link', 'confidence',
+    fields = ['type_of_feed', 'format_of_feed', 'auth_type',
+              'polling_frequency', 'auth_login', 'auth_password',
+              'ayth_querystring', 'separator', 'custom_field', 'sertificate',
+              'vendor', 'name', 'link', 'confidence',
               'records_quantity', 'update_status', 'ts', 'source_id']
 
     if config.get('is_instead_full', False):
-        Feed.objects.filter(name=feed.name).delete()
-        feed.save()
+        delete_feed(feed_name=feed.name)
     else:
-        feed_exist = Feed.objects.filter(name=feed.name).first()
+        feed_exist = get_feed(feed_name=feed.name)
         if feed_exist:
             for field in fields:
                 setattr(feed_exist, field, getattr(feed, field))
             feed = feed_exist
         else:
-            feed.save()
+            feed = save_feed(feed)
     return feed
 
 
@@ -137,14 +141,16 @@ def parse_custom_json(feed, raw_indicators=None, config: dict = {}):
         else:
             lst = list(FlatterDict(raw_json).items())
 
-        for key, value in lst:
-            indicator, created = Indicator.objects.get_or_create(value=value, defaults={
+        for _, value in lst:
+            defaults = {
                 "uuid": uuid4(),
                 "supplier_name": feed.vendor,
                 "supplier_confidence": feed.confidence,
                 "weight": feed.confidence
-            })
-            indicator.feeds.add(feed)
+            }
+
+            indicator = get_or_create(Indicator, value, defaults)
+            indicator = add_feed_to_indicator(indicator, feed)
             indicators.append(indicator)
         return indicators
     except Exception as e:
@@ -173,24 +179,25 @@ def parse_stix(feed, raw_indicators=None, config: dict = {}):
     indicators = []
     feed_control(feed, config)
     for raw_indicator in raw_indicators:
-        indicator, created = Indicator.objects.get_or_create(value=raw_indicator.get("name"),
-                                                             defaults={
-                                                                 "uuid": raw_indicator.get('id', uuid4()),
-                                                                 "first_detected_date": raw_indicator.get("created"),
-                                                                 "supplier_name": feed.vendor,
-                                                                 "supplier_confidence": feed.confidence,
-                                                                 "weight": feed.confidence
+        value = raw_indicator.get('value')
+        defaults = {
+            "uuid": raw_indicator.get('id', uuid4()),
+            "first_detected_date": raw_indicator.get("created"),
+            "supplier_name": feed.vendor,
+            "supplier_confidence": feed.confidence,
+            "weight": feed.confidence
         }
-        )
 
-        indicator.feeds.add(feed)
+        indicator = get_or_create(Indicator, value, defaults)
+        indicator = add_feed_to_indicator(indicator, feed)
+
         pattern = raw_indicator.get("pattern")
         if "ip" in pattern:
             indicator.ioc_context_ip = pattern
             indicator.type = "IP"
         elif "filesize" in pattern:
             indicator.ioc_context_file_size = pattern
-        indicator.save()
+        indicator = save_indicator(indicator=indicator)
         indicators.append(indicator)
     return indicators
 
@@ -256,16 +263,20 @@ def parse_csv(feed, raw_indicators=None, config: dict = {}) -> list:
             raw_indicators,
             delimiter=config.get('delimiter', ","),
             fieldnames=config.get('fieldnames', ""),
-            dialect=config.get('dialect', "excel"),
-    ):
-        indicator, created = Indicator.objects.get_or_create(value=row.get(feed.custom_field), defaults={
+            dialect=config.get('dialect', "excel"),):
+        defaults = {
             "uuid": uuid4,
             "supplier_name": feed.vendor,
             "supplier_confidence": feed.confidence,
             "weight": feed.confidence
-        })
-        indicator.feeds.add(feed)
-
+        }
+        value = row.get(feed.custom_field)
+        indicator = get_or_create(Indicator, value, defaults)
+        try:
+            indicator = add_feed_to_indicator(indicator, feed)
+            indicators.append(indicator)
+        except Exception as e:
+            logger.exception(f"Error adding feed to indicator: {e}")
         counter += 1
         if counter >= limit > 0:
             break
