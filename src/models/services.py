@@ -1,4 +1,4 @@
-from src.models.models import Feed, Indicator
+from src.models.models import Feed, Indicator, Source
 from src.models.provider import FeedProvider, IndicatorProvider, SourceProvider
 
 
@@ -20,6 +20,10 @@ def delete_feed(*, feed_name: str):
 
 def get_source() -> list:
     return SourceProvider().read()
+
+
+def get_source_by(fields: dict) -> Source:
+    return SourceProvider().read_by_values(**fields)
 
 
 def save_indicator(indicator: Indicator):

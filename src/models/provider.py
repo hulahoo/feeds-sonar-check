@@ -49,6 +49,11 @@ class SourceProvider:
             sources = db.query(Source).all()
             return sources
 
+    def read_by_values(self, **kwargs):
+        with SyncPostgresDriver().session() as db:
+            sources = db.query(Source).filter_by(**kwargs).first()
+            return sources
+
 
 class IndicatorProvider:
     def create(self, *, data_to_create: dict) -> Indicator:
@@ -83,5 +88,5 @@ class IndicatorProvider:
 
     def read_by_values(self, **kwargs):
         with SyncPostgresDriver().session() as db:
-            sources = db.query(Indicator).filter_by(**kwargs).first()
-            return sources
+            indicator = db.query(Indicator).filter_by(**kwargs).first()
+            return indicator

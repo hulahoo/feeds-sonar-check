@@ -10,7 +10,7 @@ from loguru import logger
 from stix2elevator import elevate
 
 from src.commons.enums import FeedFormatEnum
-from src.models.models import Feed, Indicator
+from src.models.models import Indicator
 from src.models.services import (add_feed_to_indicator, delete_feed, get_feed,
                                  get_or_create, save_feed, save_indicator)
 
