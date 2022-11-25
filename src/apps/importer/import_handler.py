@@ -1,12 +1,11 @@
 import random
 
 import requests
-from dagster import (DynamicOut, DynamicOutput, Field, job, op, repository,
-                     schedule)
+from dagster import DynamicOut, DynamicOutput, job, op, repository, schedule
 
-from src.models.services import get_source, get_source_by
+from src.apps.importer.services import choose_type
 from src.models.models import Feed
-from .services import choose_type
+from src.models.services import get_source, get_source_by
 
 PATTERN = "%Y-%m-%d"
 
@@ -25,7 +24,6 @@ def get_sources():
 
 @op
 def op_source_downloads_worker(context, data):
-    print(data)
 
     _, obj = data
     fields = {'id': obj}
