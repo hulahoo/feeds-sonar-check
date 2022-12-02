@@ -1,7 +1,7 @@
 import random
 
 import requests
-from dagster import DynamicOut, DynamicOutput, op
+from dagster import DynamicOut, DynamicOutput, op, get_dagster_logger
 
 from src.apps.importer.services import choose_type
 from src.models.models import Feed
@@ -25,9 +25,12 @@ def get_sources():
 @op
 def op_source_downloads_worker(context, data):
 
+    # log = get_dagster_logger()
     _, obj = data
     fields = {'id': obj}
     obj = get_source_by(fields=fields)
+
+    # log.info(f'\n---------\n {obj.__dict__} \n---------\n')
 
     feed_raw = {"feed": {
         "link": obj.path,
@@ -43,6 +46,9 @@ def op_source_downloads_worker(context, data):
             "is_instead_full": obj.is_instead_full
     }
     }
+
+    # log.info(f'\n---------\n {feed_raw} \n---------\n')
+
     feed = Feed(**feed_raw["feed"])
 
     method = choose_type(obj.format.lower())

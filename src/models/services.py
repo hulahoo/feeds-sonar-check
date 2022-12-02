@@ -30,23 +30,24 @@ def save_indicator(indicator: Indicator):
     return IndicatorProvider.save(indicator=indicator)
 
 
-def add_feed_to_indicator(indicator, feed_data) -> Indicator:
+def add_feed_to_indicator(indicator_id, feed_id) -> Indicator:
     return IndicatorProvider().load_feed_relationship(
-        indicator=indicator,
-        data_to_create=feed_data
+        indicator_id=indicator_id,
+        feed_id=feed_id
     )
 
 
-def get_or_create(model, values: dict, defaults: dict = None):
-    if isinstance(model, Indicator):
-        provider = IndicatorProvider()
-    else:
-        return
+def get_or_create(values: dict, defaults: dict = None):
+    provider = IndicatorProvider()
+    # if isinstance(model, Indicator):
+    #     provider = IndicatorProvider()
+    # else:
+    #     return
     if defaults is not None:
         values = {**defaults, **values}
     instance = provider.read_by_values(**values)
     if instance:
         return instance
     else:
-        instance = provider.create(**values)
+        instance = provider.create(values)
         return instance

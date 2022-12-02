@@ -47,10 +47,10 @@ class Indicator(IDBase, TimestampBase):
     __tablename__ = "indicator"
 
     type = Column(
-        Enum(TypesEnum), default=TypesEnum.IP, nullable=False, name="types"
+        String(255), default=TypesEnum.IP.value, nullable=False, name="type"
     )
     uuid = Column(
-        String(255), unique=True
+        String(255), unique=True, name="uuid"
     )
     category = Column(
         String(128), nullable=True
@@ -255,22 +255,22 @@ class Feed(IDBase, TimestampBase):
     __tablename__ = "feed"
 
     type_of_feed = Column(
-        Enum(TypesEnum), default=TypesEnum.IP,
+        String(5), default=TypesEnum.IP.value,
         name="types"
     )
     format_of_feed = Column(
-        Enum(FeedFormatEnum), default=FeedFormatEnum.TXT_FILE,
+        String(5), default=FeedFormatEnum.TXT_FILE.value,
         name="format_of_feed"
     )
     auth_type = Column(
-        Enum(AuthEnum), default=AuthEnum.NO_AUTH,
+        String(5), default=AuthEnum.NO_AUTH.value,
         name="auth_type"
     )
-    polling_frequency = Column(
-        Enum(PollingFrequencyEnum),
-        default=PollingFrequencyEnum.NEVER,
-        name="polling_frequency"
-    )
+    # polling_frequency = Column(
+    #     Enum(PollingFrequencyEnum),
+    #     default=PollingFrequencyEnum.NEVER,
+    #     name="polling_frequency"
+    # )
 
     auth_login = Column(
         String(32), nullable=True
@@ -278,7 +278,7 @@ class Feed(IDBase, TimestampBase):
     auth_password = Column(
         String(64), nullable=True
     )
-    ayth_querystring = Column(
+    auth_querystring = Column(
         String(128), nullable=True
     )
     separator = Column(
@@ -294,7 +294,7 @@ class Feed(IDBase, TimestampBase):
     )
     sertificate_file_name = Column(String(50), nullable=True)
     sertificate = Column(LargeBinary, nullable=True)
-    vendor = Column(String(32))
+    vendor = Column(String(32), default='Тестовый вендор')
     name = Column(String(32), unique=True)
     link = Column(String(255))
     confidence = Column(
@@ -308,13 +308,14 @@ class Feed(IDBase, TimestampBase):
 
     update_status = Column(
         Enum(StatusUpdateEnum), default=StatusUpdateEnum.ENABLED,
-        name="update_status_enum"
+        name="update_status"
     )
 
     ts = Column(DateTime, default=func.now())
 
-    source = Column(
-        "Source", Integer, ForeignKey("source.id"), nullable=True, default=None
+    source_id = Column(
+        Integer, ForeignKey("source.id"), nullable=True, default=None,
+        name='source_id'
     )
 
     modified = Column(DateTime, default=func.now())
@@ -356,12 +357,12 @@ class Source(IDBase, TimestampBase):
         default=0
     )
     format = Column(
-        Enum(FormatTypeEnum), default=FormatTypeEnum.CSV,
+        String(50), default=FormatTypeEnum.CSV.value,
         name="format"
     )
 
     auth_type = Column(
-        Enum(AuthEnum), default=AuthEnum.NO_AUTH,
+        String(50), default=AuthEnum.NO_AUTH.value,
         name="auth_type"
     )
     auth_login = Column(

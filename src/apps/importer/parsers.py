@@ -88,18 +88,22 @@ def convert_misp_to_indicator(feed, raw_indicators=None):
 def convert_txt_to_indicator(feed, raw_indicators=None):
     if feed.format_of_feed == FeedFormatEnum.TXT_FILE.value:
         complete_indicators = []
-        feed.save()
+        save_feed(feed)
+        # feed.save()
         for raw_indicator in raw_indicators:
             defaults = {
-                "uuid": uuid4(),
+                "uuid": f'{uuid4()}',
                 "supplier_name": feed.vendor,
                 "type": feed.type_of_feed,
                 "weight": feed.confidence,
                 "supplier_confidence": feed.confidence
             }
 
-            indicator = get_or_create(Indicator, raw_indicator, defaults)
-            indicator = add_feed_to_indicator(indicator, feed)
+            raw_indicator = {'value': raw_indicator}
+
+            indicator = get_or_create(raw_indicator, defaults)
+            # Получить id индикатора и передать его ниже
+            indicator = add_feed_to_indicator(indicator.id, feed.id)
             complete_indicators.append(indicator)
         return complete_indicators
 

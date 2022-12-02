@@ -56,7 +56,7 @@ class SourceProvider:
 
 
 class IndicatorProvider:
-    def create(self, *, data_to_create: dict) -> Indicator:
+    def create(self, data_to_create: dict) -> Indicator:
         with SyncPostgresDriver().session() as db:
             indicator = Indicator(**data_to_create)
 
@@ -75,10 +75,12 @@ class IndicatorProvider:
             db.refresh(indicator)
             return indicator
 
-    def load_feed_relationship(self, indicator, data_to_create: dict):
+    def load_feed_relationship(self, indicator_id, feed_id):
         with SyncPostgresDriver().session() as db:
-            feed = Feed(**data_to_create)
-
+            feed = db.query(Feed).filter(
+                Feed.id == feed_id).first()
+            indicator = db.query(Indicator).filter(
+                Indicator.id == indicator_id).first()
             indicator.feeds.append(feed)
             db.add(indicator)
             db.flush()
