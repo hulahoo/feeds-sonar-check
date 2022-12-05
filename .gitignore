@@ -100,7 +100,7 @@ profile_default/
 ipython_config.py
 .pdm.toml
 __pypackages__/
-threatintel/.env
+.env
 .venv
 env/
 venv/
