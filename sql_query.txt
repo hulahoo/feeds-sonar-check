@@ -1,0 +1,51 @@
+BEGIN;
+--
+-- Create model Attribute
+--
+CREATE TABLE "intelhandler_attribute" ("created" datetime NOT NULL, "modified" datetime NOT NULL, "type" varchar(30) NOT NULL, "timestamp" varchar(10) NOT NULL, "to_ids" bool NULL, "disable_correlation" bool NULL, "meta_category" varchar(30) NOT NULL, "comment" varchar(128) NULL, "uuid" varchar(36) NOT NULL PRIMARY KEY, "template_uuid" varchar(36) NOT NULL, "object_relation" varchar(30) NOT NULL, "value" varchar(128) NOT NULL);
+--
+-- Create model Feed
+--
+CREATE TABLE "intelhandler_feed" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "created" datetime NOT NULL, "modified" datetime NOT NULL, "type_of_feed" varchar(4) NOT NULL, "format_of_feed" varchar(3) NOT NULL, "auth_type" varchar(3) NOT NULL, "polling_frequency" varchar(3) NOT NULL, "auth_login" varchar(32) NULL, "auth_password" varchar(64) NULL, "ayth_querystring" varchar(128) NULL, "separator" varchar(8) NULL, "sertificate" varchar(100) NULL, "vendor" varchar(32) NOT NULL, "name" varchar(32) NOT NULL UNIQUE, "link" varchar(100) NOT NULL, "confidence" integer NOT NULL, "records_quantity" integer NULL);
+--
+-- Create model OrganizationContact
+--
+CREATE TABLE "intelhandler_organizationcontact" ("created" datetime NOT NULL, "modified" datetime NOT NULL, "name" varchar(64) NOT NULL, "uuid" varchar(36) NOT NULL PRIMARY KEY);
+--
+-- Create model Tag
+--
+CREATE TABLE "intelhandler_tag" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "created" datetime NOT NULL, "modified" datetime NOT NULL, "name" varchar(30) NOT NULL, "colour" varchar(30) NULL, "exportable" bool NULL);
+--
+-- Create model MispObject
+--
+CREATE TABLE "intelhandler_mispobject" ("created" datetime NOT NULL, "modified" datetime NOT NULL, "type" varchar(30) NOT NULL, "timestamp" varchar(10) NOT NULL, "template_version" varchar(10) NOT NULL, "sharing_group_id" varchar(10) NOT NULL, "description" varchar(128) NOT NULL, "deleted" bool NULL, "name" varchar(32) NOT NULL UNIQUE, "category" varchar(30) NOT NULL, "comment" varchar(128) NULL, "uuid" varchar(36) NOT NULL PRIMARY KEY, "object_relation" varchar(30) NOT NULL, "value" varchar(128) NOT NULL);
+CREATE TABLE "intelhandler_mispobject_attribute" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "mispobject_id" varchar(36) NOT NULL REFERENCES "intelhandler_mispobject" ("uuid") DEFERRABLE INITIALLY DEFERRED, "attribute_id" varchar(36) NOT NULL REFERENCES "intelhandler_attribute" ("uuid") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model MispEvent
+--
+CREATE TABLE "intelhandler_mispevent" ("created" datetime NOT NULL, "modified" datetime NOT NULL, "threat_level_id" varchar(1) NOT NULL, "timestamp" varchar(10) NOT NULL, "info" varchar(256) NOT NULL, "publish_timestamp" varchar(10) NOT NULL, "date" date NOT NULL, "published" bool NOT NULL, "analysis" varchar(1) NOT NULL, "uuid" varchar(36) NOT NULL PRIMARY KEY, "orgc_id" varchar(36) NULL REFERENCES "intelhandler_organizationcontact" ("uuid") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "intelhandler_mispevent_attribute" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "mispevent_id" varchar(36) NOT NULL REFERENCES "intelhandler_mispevent" ("uuid") DEFERRABLE INITIALLY DEFERRED, "attribute_id" varchar(36) NOT NULL REFERENCES "intelhandler_attribute" ("uuid") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "intelhandler_mispevent_object" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "mispevent_id" varchar(36) NOT NULL REFERENCES "intelhandler_mispevent" ("uuid") DEFERRABLE INITIALLY DEFERRED, "mispobject_id" varchar(36) NOT NULL REFERENCES "intelhandler_mispobject" ("uuid") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "intelhandler_mispevent_tag" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "mispevent_id" varchar(36) NOT NULL REFERENCES "intelhandler_mispevent" ("uuid") DEFERRABLE INITIALLY DEFERRED, "tag_id" bigint NOT NULL REFERENCES "intelhandler_tag" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model Indicator
+--
+CREATE TABLE "intelhandler_indicator" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "created" datetime NOT NULL, "modified" datetime NOT NULL, "type" varchar(4) NOT NULL, "value" varchar(256) NOT NULL, "updated_date" datetime NOT NULL, "weight" integer NOT NULL, "false_detected" integer NOT NULL, "positive_detected" integer NOT NULL, "detected" integer NOT NULL, "first_detected_date" datetime NULL, "last_detected_date" datetime NULL, "supplier_name" varchar(128) NOT NULL, "supplier_vendor_name" varchar(128) NOT NULL, "supplier_type" varchar(64) NOT NULL, "supplier_confidence" integer NOT NULL, "supplier_created_date" datetime NULL, "ioc_context_exploits_md5" varchar(64) NULL, "ioc_context_exploits_sha1" varchar(64) NULL, "ioc_context_exploits_sha256" varchar(64) NULL, "ioc_context_exploits_threat" varchar(64) NULL, "ioc_context_av_verdict" varchar(64) NULL, "ioc_context_md5" varchar(64) NULL, "ioc_context_sha1" varchar(64) NULL, "ioc_context_sha256" varchar(64) NULL, "ioc_context_affected_products_product" varchar(64) NULL, "joc_context_domains" varchar(64) NULL, "ioc_context_file_names" varchar(64) NULL, "ioc_context_file_size" varchar(64) NULL, "ioc_context_file_type" varchar(64) NULL, "ioc_context_files_behaviour" varchar(64) NULL, "ioc_context_files_md5" varchar(64) NULL, "ioc_context_files_sha1" varchar(64) NULL, "ioc_context_files_sha256" varchar(64) NULL, "ioc_context_files_threat" varchar(64) NULL, "ioc_context_malware" varchar(64) NULL, "ioc_context_mask" varchar(64) NULL, "ioc_context_popularity" varchar(64) NULL, "ioc_context_port" varchar(64) NULL, "ioc_context_protocol" varchar(64) NULL, "ioc_context_publication_name" varchar(64) NULL, "ioc_context_severity" varchar(64) NULL, "ioc_context_type" varchar(64) NULL, "ioc_context_url" varchar(64) NULL, "ioc_context_urls_url" varchar(64) NULL, "ioc_context_vendors_vendor" varchar(64) NULL, "ioc_context_geo" varchar(64) NULL, "ioc_context_id" varchar(64) NULL, "ioc_context_industry" varchar(64) NULL, "ioc_context_ip" varchar(64) NULL, "ioc_context_ip_geo" varchar(64) NULL, "ioc_context_ip_whois_asn" varchar(64) NULL, "ioc_context_ip_whois_contact_abuse_country" varchar(64) NULL, "ioc_context_ip_whois_contact_abuse_email" varchar(64) NULL, "ioc_context_ip_whois_contact_abuse_name" varchar(64) NULL, "ioc_context_ip_whois_contact_owner_city" varchar(64) NULL, "ioc_context_ip_whois_contact_owner_code" varchar(64) NULL, "ioc_context_ip_whois_contact_owner_country" varchar(64) NULL, "ioc_context_ip_whois_contact_owner_email" varchar(64) NULL, "ioc_context_ip_whois_contact_owner_name" varchar(64) NULL, "ioc_context_ip_whois_country" varchar(64) NULL, "ioc_context_ip_whois_created" varchar(64) NULL, "ioc_context_ip_whois_desrc" varchar(64) NULL, "ioc_context_ip_whois_net_name" varchar(64) NULL, "ioc_context_ip_whois_net_range" varchar(64) NULL, "ioc_context_ip_whois_updated" varchar(64) NULL, "ioc_context_whois_mx" varchar(64) NULL, "ioc_context_whois_mx_ips" varchar(64) NULL, "ioc_context_whois_ns" varchar(64) NULL, "ioc_context_whois_ns_ips" varchar(64) NULL, "ioc_context_whois_city" varchar(64) NULL, "ioc_context_whois_country" varchar(64) NULL, "ioc_context_whois_created" varchar(64) NULL, "ioc_context_whois_domain" varchar(64) NULL, "ioc_context_whois_email" varchar(64) NULL, "ioc_context_whois_expires" varchar(64) NULL, "ioc_context_whois_name" varchar(64) NULL, "ioc_context_whois_org" varchar(64) NULL, "ioc_context_whois_registrar_email" varchar(64) NULL, "ioc_context_whois_registrar_name" varchar(64) NULL, "ioc_context_whois_updated" varchar(64) NULL);
+CREATE TABLE "intelhandler_indicator_tag" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "indicator_id" bigint NOT NULL REFERENCES "intelhandler_indicator" ("id") DEFERRABLE INITIALLY DEFERRED, "tag_id" bigint NOT NULL REFERENCES "intelhandler_tag" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE UNIQUE INDEX "intelhandler_mispobject_attribute_mispobject_id_attribute_id_9e0d26f3_uniq" ON "intelhandler_mispobject_attribute" ("mispobject_id", "attribute_id");
+CREATE INDEX "intelhandler_mispobject_attribute_mispobject_id_37232163" ON "intelhandler_mispobject_attribute" ("mispobject_id");
+CREATE INDEX "intelhandler_mispobject_attribute_attribute_id_f37354ff" ON "intelhandler_mispobject_attribute" ("attribute_id");
+CREATE INDEX "intelhandler_mispevent_orgc_id_e0d2ff2c" ON "intelhandler_mispevent" ("orgc_id");
+CREATE UNIQUE INDEX "intelhandler_mispevent_attribute_mispevent_id_attribute_id_46095409_uniq" ON "intelhandler_mispevent_attribute" ("mispevent_id", "attribute_id");
+CREATE INDEX "intelhandler_mispevent_attribute_mispevent_id_7e00a204" ON "intelhandler_mispevent_attribute" ("mispevent_id");
+CREATE INDEX "intelhandler_mispevent_attribute_attribute_id_0453bd5a" ON "intelhandler_mispevent_attribute" ("attribute_id");
+CREATE UNIQUE INDEX "intelhandler_mispevent_object_mispevent_id_mispobject_id_5a514866_uniq" ON "intelhandler_mispevent_object" ("mispevent_id", "mispobject_id");
+CREATE INDEX "intelhandler_mispevent_object_mispevent_id_ee0b6cf8" ON "intelhandler_mispevent_object" ("mispevent_id");
+CREATE INDEX "intelhandler_mispevent_object_mispobject_id_2ba88f35" ON "intelhandler_mispevent_object" ("mispobject_id");
+CREATE UNIQUE INDEX "intelhandler_mispevent_tag_mispevent_id_tag_id_3ba223a1_uniq" ON "intelhandler_mispevent_tag" ("mispevent_id", "tag_id");
+CREATE INDEX "intelhandler_mispevent_tag_mispevent_id_c21211b3" ON "intelhandler_mispevent_tag" ("mispevent_id");
+CREATE INDEX "intelhandler_mispevent_tag_tag_id_cc3240f6" ON "intelhandler_mispevent_tag" ("tag_id");
+CREATE UNIQUE INDEX "intelhandler_indicator_tag_indicator_id_tag_id_8fc7aa63_uniq" ON "intelhandler_indicator_tag" ("indicator_id", "tag_id");
+CREATE INDEX "intelhandler_indicator_tag_indicator_id_1dad0ba7" ON "intelhandler_indicator_tag" ("indicator_id");
+CREATE INDEX "intelhandler_indicator_tag_tag_id_2033539f" ON "intelhandler_indicator_tag" ("tag_id");
+COMMIT;
