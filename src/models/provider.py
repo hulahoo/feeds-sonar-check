@@ -34,16 +34,6 @@ class FeedProvider:
 
 
 class SourceProvider:
-    # def create(self, *, data_to_create: dict) -> Feed:
-    #     with SyncPostgresDriver().session() as db:
-    #         feed = Feed(**data_to_create)
-
-    #         db.add(feed)
-    #         db.flush()
-    #         db.commit()
-    #         db.refresh(feed)
-    #         return feed
-
     def read(self) -> list:
         with SyncPostgresDriver().session() as db:
             sources = db.query(Source).all()

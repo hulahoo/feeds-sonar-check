@@ -10,7 +10,7 @@ from src.models.services import get_source, get_source_by
 PATTERN = "%Y-%m-%d"
 
 
-def download(path: str, limit) -> list:
+def download(path: str) -> list:
     text = requests.get(path).text
     return text
 
@@ -25,12 +25,9 @@ def get_sources():
 @op
 def op_source_downloads_worker(context, data):
 
-    # log = get_dagster_logger()
     _, obj = data
     fields = {'id': obj}
     obj = get_source_by(fields=fields)
-
-    # log.info(f'\n---------\n {obj.__dict__} \n---------\n')
 
     feed_raw = {"feed": {
         "link": obj.path,
@@ -39,15 +36,12 @@ def op_source_downloads_worker(context, data):
         "format_of_feed": obj.format,
         "name": obj.name
     },
-
         "raw_indicators": obj.raw_indicators,
         "config": {
             "limit": obj.max_rows,
             "is_instead_full": obj.is_instead_full
     }
     }
-
-    # log.info(f'\n---------\n {feed_raw} \n---------\n')
 
     feed = Feed(**feed_raw["feed"])
 
@@ -59,5 +53,5 @@ def op_source_downloads_worker(context, data):
 
 
 @op
-def end_worker(context, data):
+def end_worker(data):
     return len(data)

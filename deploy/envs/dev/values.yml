@@ -13,8 +13,8 @@ env:
 
 
 psvc:
-  name: # change me
-  description: # change me
+  name: Импорт фидов
+  description: Воркер Импорта и Дедубликации Фидов
   istioSidecarSettings:
     limits:
       memory: 200Mi
@@ -28,6 +28,33 @@ psvc:
       methods: GET,POST
       zones: external
   publishAPI: true
+
+spec:
+  ports:
+    - name: kafka
+      port: 9092
+      protocol: TCP
+      targetPort: 9092
+
+  livenessProbe:
+    failureThreshold: 5
+    httpGet:
+      path: 0.0.0.0:8080/api/health/liveness
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 1
+
+  readinessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: 0.0.0.0:8080/api/health/health/readiness
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 1
 
 vaultSecretKeys:
   - POSTGRES_PASSWORD

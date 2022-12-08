@@ -14,7 +14,9 @@ install_requires = [
     ('confluent-kafka', '1.9.2'),
     ('kafka-python', '2.0.2'),
     ('dagster', '1.0.17'),
-    ('dagit', '1.0.17')
+    ('dagit', '1.0.17'),
+    ('flask-restplus', '0.13.0'),
+    ('Flask', '1.1.2')
 ]
 
 CI_PROJECT_NAME = os.environ.get(
@@ -23,7 +25,7 @@ ARTIFACT_VERSION = os.environ.get("ARTIFACT_VERSION", "local")
 CI_PROJECT_TITLE = os.environ.get(
     "CI_PROJECT_TITLE", "Воркер Импорта и Дедубликации Фидов")
 CI_PROJECT_URL = os.environ.get(
-    "CI_PROJECT_URL", "https://gitlab.rshbdev.ru/rshbintech/information-security/application-security/threat-intelligence/events-gateway")
+    "CI_PROJECT_URL", "https://gitlab.in.axept.com/rshb/feeds-importing-worker")
 
 
 setup(
