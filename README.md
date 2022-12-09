@@ -29,11 +29,9 @@ pip3 install -r requirements.txt
 ## Информаци о ENV-параметрах
 Имеющиеся env-параметры в проекте:
 ```
-SQL_DATABASE=
-SQL_USER=
-SQL_PASSWORD=
-SQL_HOST=
-SQL_PORT=
+POSTGRES_SERVER=""
+POSTGRES_DB=""
+POSTGRES_PORT=""
 
 KAFKA_HOST=
 EVENTS_COLLECTOR_TOPIC="" # topic куда будут отправлены данные полученные по SYSLOG

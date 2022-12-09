@@ -9,10 +9,10 @@ resources:
     cpu: 100m
 
 env:
-  SQL_DATABASE="mydb"
-  SQL_HOST="10.7.77.7"
-  SQL_PORT="5432"
-
+  POSTGRES_SERVER="10.7.77.7"
+  POSTGRES_DB="mydb"
+  POSTGRES_PORT="5432"
+g
   KAFKA_HOST="kafka.rshbdev.ru:9092"
   DATA_PROCCESSING_TOPIC="data_proccessing"
   ALLOW_ANONYMOUS_LOGIN=yes

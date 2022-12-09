@@ -12,7 +12,6 @@ class KAFKAConfig:
 @dataclass
 class DBConfig:
     name: str
-    engine: str
     user: str
     password: str
     host: str
@@ -35,12 +34,11 @@ def load_config(path: str = None) -> Config:
             data_proccessing_topic=env.str('DATA_PROCCESSING_TOPIC'),
         ),
         db=DBConfig(
-            name=env.str('SQL_DATABASE'),
-            engine=env.str('SQL_ENGINE'),
-            user=env.str('SQL_USER'),
-            password=env.str('SQL_PASSWORD'),
-            host=env.str('SQL_HOST'),
-            port=env.str('SQL_PORT')
+            name=env.str('POSTGRES_DB'),
+            user=env.str('POSTGRES_USER'),
+            password=env.str('POSTGRES_PASSWORD'),
+            host=env.str('POSTGRES_SERVER'),
+            port=env.str('POSTGRES_PORT')
         )
     )
 
