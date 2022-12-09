@@ -35,8 +35,6 @@ SQL_PASSWORD=
 SQL_HOST=
 SQL_PORT=
 
-EVENTS_PORT=
-EVENTS_HOST=
 KAFKA_HOST=
 EVENTS_COLLECTOR_TOPIC="" # topic куда будут отправлены данные полученные по SYSLOG
 ALLOW_ANONYMOUS_LOGIN=(yes/no) # для логина в zookeper

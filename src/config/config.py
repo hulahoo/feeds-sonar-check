@@ -6,9 +6,7 @@ from environs import Env
 @dataclass
 class KAFKAConfig:
     server: str
-    collector_topic: str
-    events_port: str
-    events_host: str
+    data_proccessing_topic: str
 
 
 @dataclass
@@ -34,9 +32,7 @@ def load_config(path: str = None) -> Config:
     return Config(
         kafka=KAFKAConfig(
             server=env.str('KAFKA_HOST'),
-            collector_topic=env.str('EVENTS_COLLECTOR_TOPIC'),
-            events_port=env.str('EVENTS_PORT'),
-            events_host=env.str('EVENTS_HOST')
+            data_proccessing_topic=env.str('DATA_PROCCESSING_TOPIC'),
         ),
         db=DBConfig(
             name=env.str('SQL_DATABASE'),
