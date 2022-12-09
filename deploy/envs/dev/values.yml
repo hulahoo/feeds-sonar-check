@@ -70,7 +70,6 @@ vaultSecretKeys:
 strategyType: Recreate
 
 databases:
-  - id: DATABASE_1
     type: POSTGRESQL
     host: 10.7.77.7
     port: 5432
