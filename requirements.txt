@@ -12,3 +12,4 @@ kafka-python==2.0.2
 dagit==1.0.17
 Flask==1.1.2
 flask-restplus==0.13.0
+Flask-WTF==1.0.1
