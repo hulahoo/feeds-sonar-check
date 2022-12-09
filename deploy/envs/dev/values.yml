@@ -9,14 +9,13 @@ resources:
     cpu: 100m
 
 env:
-  POSTGRES_SERVER="10.7.77.7"
-  POSTGRES_DB="mydb"
-  POSTGRES_PORT="5432"
-g
-  KAFKA_HOST="kafka.rshbdev.ru:9092"
-  DATA_PROCCESSING_TOPIC="data_proccessing"
-  ALLOW_ANONYMOUS_LOGIN=yes
-  ALLOW_PLAINTEXT_LISTENER=yes
+  POSTGRES_SERVER: 10.7.77.7
+  POSTGRES_DB: mydb
+  POSTGRES_PORT: 5432
+  KAFKA_HOST: kafka.rshbdev.ru:9092
+  DATA_PROCCESSING_TOPIC: data_proccessing
+  ALLOW_ANONYMOUS_LOGIN: yes
+  ALLOW_PLAINTEXT_LISTENER: yes
 
 
 psvc:
@@ -29,39 +28,6 @@ psvc:
     requests:
       memory: 50Mi
       cpu: 10m
-  roleMapping:
-    - endpoint: /api/v1/todo-lists
-      roles: admin
-      methods: GET,POST
-      zones: external
-  publishAPI: true
-
-spec:
-  ports:
-    - name: kafka
-      port: 9092
-      protocol: TCP
-      targetPort: 9092
-
-  livenessProbe:
-    failureThreshold: 5
-    httpGet:
-      path: 0.0.0.0:8080/api/health/liveness
-      port: 8080
-    initialDelaySeconds: 1054
-    periodSeconds: 5
-    successThreshold: 1
-    timeoutSeconds: 1
-
-  readinessProbe:
-    failureThreshold: 3
-    httpGet:
-      path: 0.0.0.0:8080/api/health/health/readiness
-      port: 8080
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    successThreshold: 1
-    timeoutSeconds: 1
 
 vaultSecretKeys:
   - POSTGRES_PASSWORD
@@ -78,4 +44,4 @@ databases:
 kafkaClusters:
   cluster-1:
     topics:
-      syslog:
+      data_proccessing:
