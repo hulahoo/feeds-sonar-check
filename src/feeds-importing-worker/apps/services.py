@@ -2,9 +2,9 @@ import requests
 
 from datetime import datetime
 
-from src.models.provider import FeedProvider, FeedRawDataProvider
-from src.models.models import Feed, FeedRawData
-from src.constants import CHUNK_SIZE
+from apps.models.provider import FeedProvider, FeedRawDataProvider
+from apps.models.models import Feed, FeedRawData
+from apps.constants import CHUNK_SIZE
 
 
 class FeedService:

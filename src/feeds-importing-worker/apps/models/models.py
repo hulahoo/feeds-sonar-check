@@ -4,7 +4,7 @@ from sqlalchemy import (
     Column, Integer, String, ForeignKey, DateTime, Text, Boolean
 )
 
-from src.models.abstract import IDBase, TimestampBase
+from apps.models.abstract import IDBase, TimestampBase
 
 
 class FeedRawData(IDBase, TimestampBase):

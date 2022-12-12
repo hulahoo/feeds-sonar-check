@@ -1,7 +1,6 @@
 from loguru import logger
 
-from src.models.base import SyncPostgresDriver, metadata
-from src.models.models import Feed, FeedRawData
+from apps.models.base import SyncPostgresDriver, metadata
 
 
 def create_migrations():

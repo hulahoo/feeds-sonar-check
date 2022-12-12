@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from src.models.base import SyncPostgresDriver
-from src.models.models import Feed, FeedRawData
+from apps.models.base import SyncPostgresDriver
+from apps.models.models import Feed, FeedRawData
 
 
 class BaseProvider:

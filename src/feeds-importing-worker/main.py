@@ -1,8 +1,8 @@
-from dagster import job, op, schedule, repository, OpExecutionContext, ScheduleEvaluationContext, RunRequest, ScheduleDefinition
+from dagster import job, repository, ScheduleDefinition
 
-from src.services import FeedService
-from src.models.provider import FeedProvider
-from src.models.models import Feed
+from apps.services import FeedService
+from apps.models.provider import FeedProvider
+from apps.models.models import Feed
 
 
 def update_feed_raw_data(feed: Feed):
