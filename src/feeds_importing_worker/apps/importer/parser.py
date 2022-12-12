@@ -4,25 +4,25 @@ import json
 from typing import Iterator
 
 from feeds_importing_worker.apps.importer.utils import ParsingRules
-from feeds_importing_worker.apps.models.models import Indicator
+from feeds_importing_worker.apps.models.models import Indicators
 
 
 class PlainTextParser:
-    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
+    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicators]:
         parsing_rules = ParsingRules(parsing_rules)
 
         for value in data:
             if not value or value[0] == '#':
                 continue
 
-            yield Indicator(
+            yield Indicators(
                 ioc_type=parsing_rules['ioc-type'].value,
                 value=value,
             )
 
 
 class CSVParser:
-    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
+    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicators]:
         parsing_rules = ParsingRules(parsing_rules)
 
         reader = csv.reader(data, delimiter=',')
@@ -41,7 +41,7 @@ class CSVParser:
             for context_rule in parsing_rules.get_context_rules():
                 context[context_rule] = row[parsing_rules[f'context.{context_rule}'].column]
 
-            yield Indicator(
+            yield Indicators(
                 ioc_type=parsing_rules['ioc-type'].value,
                 value=row[parsing_rules['ioc-value'].column],
                 context=context
@@ -62,7 +62,7 @@ class Stix2Parser:
             if value.find(pattern) != -1:
                 return self.TYPE_MAPPING[pattern]
 
-    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
+    def get_indicators(self, data: str) -> Iterator[Indicators]:
         content = ''
 
         # TODO: сделать потоковый парсинг для больших файлов
@@ -79,7 +79,7 @@ class Stix2Parser:
 
             stix_type, value = map(lambda item: item.strip().strip("'"), pattern.split('=', 1))
 
-            yield Indicator(
+            yield Indicators(
                 ioc_type=self._get_type(stix_type),
                 value=value,
             )

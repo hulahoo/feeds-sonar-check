@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import and_
 
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
-from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicators
 
 
 class BaseProvider:
@@ -33,14 +33,14 @@ class FeedRawDataProvider(BaseProvider):
 
 
 class IndicatorProvider(BaseProvider):
-    def add(self, indicator: Indicator):
+    def add(self, indicator: Indicators):
         self.session.add(indicator)
 
-    def get_by_value_type(self, value: str, type: str) -> Optional[Indicator]:
-        query = self.session.query(Indicator).filter(
+    def get_by_value_type(self, value: str, type: str) -> Optional[Indicators]:
+        query = self.session.query(Indicators).filter(
             and_(
-                Indicator.value == value,
-                Indicator.ioc_type == type
+                Indicators.value == value,
+                Indicators.ioc_type == type
             )
         )
 

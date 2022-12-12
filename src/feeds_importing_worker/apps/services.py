@@ -63,7 +63,7 @@ class FeedService:
         logger.info(f'Start parsing feed {feed.provider} - {feed.title}...')
 
         parser = get_parser(feed.format)
-        new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)
+        new_indicators = parser.get_indicators(feed.raw_content)
 
         for new_indicator in new_indicators:
             indicator = self.indicator_provider.get_by_value_type(new_indicator.value, new_indicator.ioc_type)

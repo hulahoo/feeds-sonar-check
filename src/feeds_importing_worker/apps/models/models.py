@@ -8,9 +8,9 @@ from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
 
 
 class FeedRawData(IDBase, TimestampBase):
-    __tablename__ = "feed_raw_data"
+    __tablename__ = "feeds_raw_data"
 
-    feed_id = Column(Integer, ForeignKey("feed.id"))
+    feed_id = Column(Integer, ForeignKey("feeds.id"))
 
     filename = Column(String(128))
     content = Column(BYTEA)
@@ -18,7 +18,7 @@ class FeedRawData(IDBase, TimestampBase):
 
 
 class Feed(IDBase, TimestampBase):
-    __tablename__ = "feed"
+    __tablename__ = "feeds"
 
     title = Column(String(128))
     provider = Column(String(128))
@@ -64,8 +64,8 @@ class Feed(IDBase, TimestampBase):
         return self.id == other.id
 
 
-class Indicator(IDBase, TimestampBase):
-    __tablename__ = "indicator"
+class Indicators(IDBase, TimestampBase):
+    __tablename__ = "indicators"
 
     ioc_type = Column(String(16))
     value = Column(String(512))
@@ -90,6 +90,6 @@ class Indicator(IDBase, TimestampBase):
 
 class IndicatorFeedRelationships(IDBase, TimestampBase):
     __tablename__ = "indicator_feed_relationships"
-    indicator_id = Column(Integer, ForeignKey("indicator.id"))
-    feed_id = Column(Integer, ForeignKey("feed.id"))
+    indicator_id = Column(Integer, ForeignKey("indicators.id"))
+    feed_id = Column(Integer, ForeignKey("feeds.id"))
     deleted_at = Column(DateTime)

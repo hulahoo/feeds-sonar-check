@@ -1,14 +1,11 @@
 from abc import abstractmethod, ABC
 
 from sqlalchemy import create_engine, MetaData
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from feeds_importing_worker.config.config import settings
-
-
-metadata = MetaData()
-Base = declarative_base(metadata=metadata)
 
 
 class Database(ABC):
@@ -37,7 +34,7 @@ class SyncPostgresDriver(Database):
         return f"postgresql://{settings.db.user}:{settings.db.password}@" \
             f"{settings.db.host}:{settings.db.port}/{settings.db.name}"
 
-    def _create_engine(self):
+    def _create_engine(self) -> Engine:
         return create_engine(
             self._get_db_url(),
             pool_pre_ping=True,
@@ -51,3 +48,5 @@ class SyncPostgresDriver(Database):
             autocommit=False, autoflush=False, bind=self.engine
         ))
 
+metadata = MetaData(bind=SyncPostgresDriver().engine)
+Base = declarative_base(metadata=metadata)

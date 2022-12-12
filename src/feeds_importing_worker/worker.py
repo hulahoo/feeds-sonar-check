@@ -1,5 +1,3 @@
-import subprocess
-
 from dagster import job, repository, ScheduleDefinition, op
 
 from feeds_importing_worker.apps.models.migrations import create_migrations
@@ -27,7 +25,6 @@ def update_feed(feed: Feed):
 
 @repository
 def feeds_repository():
-    create_migrations()
     feeds = feed_provider.get_all()
 
     jobs = []
@@ -41,7 +38,3 @@ def feeds_repository():
         )
 
     return jobs
-
-
-def start_worker():
-    subprocess.run(["dagit", "-f", "src/feeds_importing_worker/worker.py"])
