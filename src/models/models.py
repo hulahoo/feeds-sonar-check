@@ -1,10 +1,20 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, BYTEA
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, DateTime, Text, Boolean
 )
 
 from src.models.abstract import IDBase, TimestampBase
+
+
+class FeedRawData(IDBase, TimestampBase):
+    __tablename__ = "feed_raw_data"
+
+    feed_id = Column(Integer, ForeignKey("feed.id"))
+
+    filename = Column(String(128))
+    content = Column(BYTEA)
+    chunk = Column(Integer)
 
 
 class Feed(IDBase, TimestampBase):
@@ -20,18 +30,15 @@ class Feed(IDBase, TimestampBase):
     auth_pass = Column(String(32))
     certificate = Column(Text)
     use_taxii = Column(Boolean)
-    polling_frequency = Column(Boolean)
+    polling_frequency = Column(String(32))
     weight = Column(Integer)
     parsing_rules = Column(JSONB)
     is_active = Column(Boolean)
     updated_at = Column(DateTime)
 
+    data = relationship(FeedRawData, order_by=FeedRawData.chunk)
 
-class FeedRawData(IDBase, TimestampBase):
-    __tablename__ = "feed_raw_data"
-
-    feed_id = Column(Integer, ForeignKey("feed.id"))
-
-    filename = Column(String(128))
-    content = Column(Text)
-    chunk = Column(Integer)
+    @property
+    def raw_content(self):
+        for data in self.data:
+            yield data.content

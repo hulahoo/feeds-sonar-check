@@ -29,17 +29,8 @@ class Database(ABC):
     def _init_session_factory(self):
         ...
 
-    @contextmanager
     def session(self):
-        session: Session = self._session_factory()
-
-        try:
-            yield session
-        except Exception as e:
-            session.rollback()
-            raise e
-        finally:
-            session.close()
+        return self._session_factory()
 
 
 class SyncPostgresDriver(Database):
