@@ -8,12 +8,6 @@ class BaseProvider:
     def __init__(self):
         self.session = SyncPostgresDriver().session()
 
-    def commit(self):
-        self.session.commit()
-
-    def rollback(self):
-        self.session.rollback()
-
 
 class FeedProvider(BaseProvider):
     def get_all(self, is_active=True):

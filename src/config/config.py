@@ -1,12 +1,10 @@
 from dataclasses import dataclass
-
 from environs import Env
 
 
 @dataclass
 class DBConfig:
     name: str
-    engine: str
     user: str
     password: str
     host: str
@@ -25,7 +23,6 @@ def load_config(path: str = None) -> Config:
     return Config(
         db=DBConfig(
             name=env.str('SQL_DATABASE'),
-            engine=env.str('SQL_ENGINE'),
             user=env.str('SQL_USER'),
             password=env.str('SQL_PASSWORD'),
             host=env.str('SQL_HOST'),
