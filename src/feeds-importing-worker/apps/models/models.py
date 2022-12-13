@@ -1,7 +1,7 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA
 from sqlalchemy import (
-    Column, Integer, String, ForeignKey, DateTime, Text, Boolean
+    Column, Integer, String, ForeignKey, DateTime, Text, Boolean, UniqueConstraint
 )
 
 from apps.models.abstract import IDBase, TimestampBase
@@ -41,4 +41,39 @@ class Feed(IDBase, TimestampBase):
     @property
     def raw_content(self):
         for data in self.data:
-            yield data.content
+            for content in data.content.decode('utf-8').split('\n'):
+                yield content
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+
+class Indicator(IDBase, TimestampBase):
+    __tablename__ = "indicator"
+
+    ioc_type = Column(String(16))
+    value = Column(String(256))
+    context = Column(JSONB)
+    is_sending_to_detections = Column(Boolean, default=True)
+    is_false_positive = Column(Boolean, default=False)
+    ioc_weight = Column(Integer)
+    tags_weight = Column(Integer)
+    is_archived = Column(Boolean, default=False)
+    false_detected_counter = Column(Integer)
+    positive_detected_counter = Column(Integer)
+    total_detected_counter = Column(Integer)
+    first_detected_at = Column(DateTime)
+    last_detected_at = Column(DateTime)
+    created_by = Column(Integer)
+    updated_at = Column(DateTime)
+
+    feeds = relationship(Feed, backref='indicators', secondary='indicator_feed_relationships')
+
+    UniqueConstraint(value, ioc_type, name='indicator_unique_value_type')
+
+
+class IndicatorFeedRelationships(IDBase, TimestampBase):
+    __tablename__ = "indicator_feed_relationships"
+    indicator_id = Column(Integer, ForeignKey("indicator.id"))
+    feed_id = Column(Integer, ForeignKey("feed.id"))
+    deleted_at = Column(DateTime)

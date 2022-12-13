@@ -1,7 +1,9 @@
+from typing import Optional
 from datetime import datetime
+from sqlalchemy import and_
 
 from apps.models.base import SyncPostgresDriver
-from apps.models.models import Feed, FeedRawData
+from apps.models.models import Feed, FeedRawData, Indicator
 
 
 class BaseProvider:
@@ -28,3 +30,18 @@ class FeedProvider(BaseProvider):
 class FeedRawDataProvider(BaseProvider):
     def add(self, feed_raw_data: FeedRawData):
         self.session.add(feed_raw_data)
+
+
+class IndicatorProvider(BaseProvider):
+    def add(self, indicator: Indicator):
+        self.session.add(indicator)
+
+    def get_by_value_type(self, value: str, type: str) -> Optional[Indicator]:
+        query = self.session.query(Indicator).filter(
+            and_(
+                Indicator.value == value,
+                Indicator.ioc_type == type
+            )
+        )
+
+        return query.one_or_none()
