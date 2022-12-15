@@ -1,6 +1,6 @@
-from typing import Iterator
-import json
 import re
+import json
+from typing import Iterator
 
 
 class ParsingRule:

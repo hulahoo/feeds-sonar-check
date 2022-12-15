@@ -2,8 +2,8 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import and_
 
-from apps.models.base import SyncPostgresDriver
-from apps.models.models import Feed, FeedRawData, Indicator
+from feeds_importing_worker.apps.models.base import SyncPostgresDriver
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator
 
 
 class BaseProvider:

@@ -1,8 +1,10 @@
+import subprocess
+
 from dagster import job, repository, ScheduleDefinition, op
 
-from apps.services import FeedService
-from apps.models.provider import FeedProvider
-from apps.models.models import Feed
+from feeds_importing_worker.apps.models.models import Feed
+from feeds_importing_worker.apps.services import FeedService
+from feeds_importing_worker.apps.models.provider import FeedProvider
 
 
 feed_service = FeedService()
@@ -34,3 +36,7 @@ def feeds_repository():
         )
 
     return jobs
+
+
+def start_worker():
+    subprocess.run(["dagit", "-f", "worker.py"])

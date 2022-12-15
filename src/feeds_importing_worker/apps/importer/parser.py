@@ -3,8 +3,8 @@ import json
 
 from typing import Iterator
 
-from apps.importer.utils import ParsingRules
-from apps.models.models import Indicator
+from feeds_importing_worker.apps.importer.utils import ParsingRules
+from feeds_importing_worker.apps.models.models import Indicator
 
 
 class PlainTextParser:

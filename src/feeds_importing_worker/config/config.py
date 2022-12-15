@@ -22,11 +22,11 @@ def load_config(path: str = None) -> Config:
 
     return Config(
         db=DBConfig(
-            name=env.str('SQL_DATABASE'),
-            user=env.str('SQL_USER'),
-            password=env.str('SQL_PASSWORD'),
-            host=env.str('SQL_HOST'),
-            port=env.str('SQL_PORT')
+            name=env.str('APP_POSTGRESQL_NAME'),
+            user=env.str('APP_POSTGRESQL_USER'),
+            password=env.str('APP_POSTGRESQL_PASSWORD'),
+            host=env.str('APP_POSTGRESQL_HOST'),
+            port=env.str('APP_POSTGRESQL_PORT')
         )
     )
 

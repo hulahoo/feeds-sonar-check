@@ -1,12 +1,12 @@
 import requests
 
 from datetime import datetime
-from loguru import logger
+from feeds_importing_worker.config.log_conf import logger
 
-from apps.models.provider import FeedProvider, FeedRawDataProvider, IndicatorProvider
-from apps.models.models import Feed, FeedRawData, Indicator
-from apps.constants import CHUNK_SIZE
-from apps.importer import get_parser
+from feeds_importing_worker.apps.importer import get_parser
+from feeds_importing_worker.apps.constants import CHUNK_SIZE
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData
+from feeds_importing_worker.apps.models.provider import FeedProvider, FeedRawDataProvider, IndicatorProvider
 
 
 class FeedService:

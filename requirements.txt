@@ -25,7 +25,6 @@ httptools==0.5.0
 humanfriendly==10.0
 idna==3.4
 Jinja2==3.1.2
-loguru==0.6.0
 Mako==1.2.4
 MarkupSafe==2.1.1
 marshmallow==3.19.0
@@ -59,3 +58,6 @@ watchdog==2.2.0
 watchfiles==0.18.1
 websockets==10.4
 yarl==1.8.2
+Flask==2.1.0
+Flask-WTF==1.0.1
+prometheus-client==0.15.0

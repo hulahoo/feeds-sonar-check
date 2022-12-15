@@ -1,6 +1,6 @@
 import sqlalchemy
 
-from apps.models.base import Base
+from feeds_importing_worker.apps.models.base import Base
 
 
 class IDBase(Base):
