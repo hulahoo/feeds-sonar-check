@@ -1,4 +1,4 @@
-from dagster import job, repository, ScheduleDefinition
+from dagster import job, repository, ScheduleDefinition, op
 
 from apps.services import FeedService
 from apps.models.provider import FeedProvider
@@ -9,13 +9,17 @@ feed_service = FeedService()
 feed_provider = FeedProvider()
 
 
-def update_feed_raw_data(feed: Feed):
-    @job(name=feed.provider)
-    def fn():
+def update_feed(feed: Feed):
+    @op(name=feed.provider + '_op')
+    def op_fn():
         feed_service.update_raw_data(feed)
         feed_service.parse(feed)
 
-    return fn
+    @job(name=feed.provider)
+    def job_fn():
+        op_fn()
+
+    return job_fn
 
 
 @repository
@@ -26,7 +30,7 @@ def feeds_repository():
 
     for feed in feeds:
         jobs.append(
-            ScheduleDefinition(job=update_feed_raw_data(feed), cron_schedule=feed.polling_frequency)
+            ScheduleDefinition(job=update_feed(feed), cron_schedule=feed.polling_frequency)
         )
 
     return jobs

@@ -12,6 +12,9 @@ class PlainTextParser:
         parsing_rules = ParsingRules(parsing_rules)
 
         for value in data:
+            if not value or value[0] == '#':
+                continue
+
             yield Indicator(
                 ioc_type=parsing_rules['ioc-type'].value,
                 value=value,
@@ -27,7 +30,7 @@ class CSVParser:
         skip_header = True
 
         for row in reader:
-            if row[0][0] == '#':
+            if not row[0] or row[0][0] == '#':
                 continue
 
             if skip_header:
