@@ -40,9 +40,25 @@ class Feed(IDBase, TimestampBase):
 
     @property
     def raw_content(self):
+        pending = None
+
         for data in self.data:
-            for content in data.content.decode('utf-8').split('\n'):
-                yield content
+            content = data.content.decode('utf-8')
+
+            if pending is not None:
+                content = pending + content
+
+            lines = content.split('\n')
+
+            if lines and lines[-1] and content and lines[-1][-1] == content[-1]:
+                pending = lines.pop()
+            else:
+                pending = None
+
+            yield from lines
+
+        if pending is not None:
+            yield pending
 
     def __eq__(self, other):
         return self.id == other.id
