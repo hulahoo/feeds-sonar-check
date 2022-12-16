@@ -1,4 +1,5 @@
 import requests
+from requests.auth import HTTPBasicAuth
 
 from datetime import datetime
 from feeds_importing_worker.config.log_conf import logger
@@ -14,8 +15,14 @@ class FeedService:
         self.indicator_provider = IndicatorProvider()
         self.feed_raw_data_provider = FeedRawDataProvider()
 
-    def _download_raw_data(self, url: str):
-        with requests.get(url, stream=True) as r:
+    def _download_raw_data(self, feed: Feed):
+        auth = None
+
+        # TODO: implement token auth
+        if feed.auth_type == 'basic':
+            auth = HTTPBasicAuth(feed.auth_login, feed.auth_pass)
+
+        with requests.get(feed.url, auth=auth, stream=True) as r:
             r.raise_for_status()
 
             for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
@@ -28,7 +35,7 @@ class FeedService:
         now = datetime.now()
         chunk_num = 1
 
-        for chunk in self._download_raw_data(feed.url):
+        for chunk in self._download_raw_data(feed):
             feed_raw_data = FeedRawData(
                 feed_id=feed.id,
                 filename=feed.title,
