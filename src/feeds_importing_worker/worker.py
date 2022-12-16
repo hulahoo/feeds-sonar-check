@@ -2,6 +2,7 @@ import subprocess
 
 from dagster import job, repository, ScheduleDefinition, op
 
+from feeds_importing_worker.apps.models.migrations import create_migrations
 from feeds_importing_worker.apps.models.models import Feed
 from feeds_importing_worker.apps.services import FeedService
 from feeds_importing_worker.apps.models.provider import FeedProvider
@@ -26,6 +27,7 @@ def update_feed(feed: Feed):
 
 @repository
 def feeds_repository():
+    create_migrations()
     feeds = feed_provider.get_all()
 
     jobs = []
