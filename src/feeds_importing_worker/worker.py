@@ -32,11 +32,14 @@ def feeds_repository():
 
     for feed in feeds:
         jobs.append(
-            ScheduleDefinition(job=update_feed(feed), cron_schedule=feed.polling_frequency)
+            ScheduleDefinition(
+                job=update_feed(feed),
+                cron_schedule=feed.polling_frequency,
+            )
         )
 
     return jobs
 
 
 def start_worker():
-    subprocess.run(["dagit", "-f", "worker.py"])
+    subprocess.run(["dagit", "-f", "src/feeds_importing_worker/worker.py"])

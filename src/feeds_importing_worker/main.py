@@ -1,16 +1,25 @@
-import threading
+"""Main file for running the service"""
 
-from feeds_importing_worker.config.log_conf import logger
-from feeds_importing_worker.web.routers.api import app as flask_app
+from threading import Thread
+
 from feeds_importing_worker.apps.models.migrations import create_migrations
+from feeds_importing_worker.web.routers.api import execute as flask_app
 from feeds_importing_worker.worker import start_worker
 
 
-def execute():
-    create_migrations()
-    logger.info("Migrations applied successfully")
+def execute() -> None:
+    """Run the service.
 
-    flask_thread = threading.Thread(target=flask_app)
-    worker_thread = threading.Thread(target=start_worker)
+    1. Create migrations;
+    2. Run Flask thread;
+    3. Run Worker thread.
+
+    """
+
+    create_migrations()
+
+    flask_thread: Thread = Thread(target=flask_app)
+    worker_thread: Thread = Thread(target=start_worker)
+
     flask_thread.start()
     worker_thread.start()
