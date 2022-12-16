@@ -68,7 +68,7 @@ class Indicator(IDBase, TimestampBase):
     __tablename__ = "indicator"
 
     ioc_type = Column(String(16))
-    value = Column(String(256))
+    value = Column(String(512))
     context = Column(JSONB)
     is_sending_to_detections = Column(Boolean, default=True)
     is_false_positive = Column(Boolean, default=False)

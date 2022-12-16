@@ -46,3 +46,40 @@ class CSVParser:
                 value=row[parsing_rules['ioc-value'].column],
                 context=context
             )
+
+
+class Stix2Parser:
+    TYPE_MAPPING = {
+        'hashes': 'hash',
+        'domain': 'domain',
+        'url': 'url',
+        'ipv4': 'ip',
+        'email': 'email',
+    }
+
+    def _get_type(self, value: str):
+        for pattern in self.TYPE_MAPPING:
+            if value.find(pattern) != -1:
+                return self.TYPE_MAPPING[pattern]
+
+    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
+        content = ''
+
+        # TODO: сделать потоковый парсинг для больших файлов
+        for value in data:
+            content += value
+
+        indicators = json.loads(content)
+
+        for obj in indicators['objects']:
+            if obj['type'] != 'indicator':
+                continue
+
+            pattern = obj['pattern'].strip('[').strip(']')
+
+            stix_type, value = map(lambda item: item.strip().strip("'"), pattern.split('=', 1))
+
+            yield Indicator(
+                ioc_type=self._get_type(stix_type),
+                value=value,
+            )
