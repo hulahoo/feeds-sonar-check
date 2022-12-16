@@ -16,7 +16,8 @@ def execute() -> None:
     """
 
     flask_thread: Thread = Thread(target=flask_app)
-    worker_thread: Thread = Thread(target=start_worker)
+    # TODO раскомментить воркер
+    # worker_thread: Thread = Thread(target=start_worker)
 
     flask_thread.start()
-    worker_thread.start()
+    # worker_thread.start()
