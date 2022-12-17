@@ -3,7 +3,7 @@ from sqlalchemy.engine.base import Engine
 from sqlalchemy import inspect
 
 from feeds_importing_worker.config.log_conf import logger
-from feeds_importing_worker.apps.models.base import SyncPostgresDriver, metadata
+from feeds_importing_worker.apps.models.base import SyncPostgresDriver
 from feeds_importing_worker.apps.models.models import Indicators, IndicatorFeedRelationships, FeedsRawData
 
 
@@ -11,15 +11,6 @@ def create_migrations() -> None:
     """Create migrations for Database"""
     engine: Engine = SyncPostgresDriver().engine
     tables_list = [Indicators.__tablename__, IndicatorFeedRelationships.__tablename__, FeedsRawData.__tablename__]
-
-    with SyncPostgresDriver().session() as db:
-        db.execute("DROP TABLE IF EXISTS indicator CASCADE;")
-        db.execute("DROP TABLE IF EXISTS feeds_raw_data CASCADE;")
-        db.execute("DROP TABLE IF EXISTS feed_raw_data CASCADE;")
-        db.execute("DROP TABLE IF EXISTS indicator_feed_relationships CASCADE;")
-        db.flush()
-        db.commit()
-        logger.info("Table indicator dropped")
 
     if not inspect(engine).has_table("indicators"):
         Indicators.__table__.create(engine)
