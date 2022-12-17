@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import and_
 
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
-from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicators
+from feeds_importing_worker.apps.models.models import Feed, FeedsRawData, Indicators
 
 
 class BaseProvider:
@@ -18,17 +18,17 @@ class FeedProvider(BaseProvider):
         return query.all()
 
     def clear_old_data(self, feed: Feed, clear_before: datetime):
-        query = self.session.query(FeedRawData).filter(
-            FeedRawData.created_at < clear_before
+        query = self.session.query(FeedsRawData).filter(
+            FeedsRawData.created_at < clear_before
         ).filter(
-            FeedRawData.feed_id == feed.id
+            FeedsRawData.feed_id == feed.id
         )
 
         query.delete()
 
 
 class FeedRawDataProvider(BaseProvider):
-    def add(self, feed_raw_data: FeedRawData):
+    def add(self, feed_raw_data: FeedsRawData):
         self.session.add(feed_raw_data)
 
 

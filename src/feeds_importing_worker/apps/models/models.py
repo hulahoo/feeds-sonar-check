@@ -1,16 +1,17 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA
 from sqlalchemy import (
-    Column, Integer, String, ForeignKey, DateTime, Text, Boolean, UniqueConstraint
+    Column, Integer, String, DateTime, Text, Boolean, UniqueConstraint,
+    BigInteger
 )
 
 from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
 
 
-class FeedRawData(IDBase, TimestampBase):
+class FeedsRawData(IDBase, TimestampBase):
     __tablename__ = "feeds_raw_data"
 
-    feed_id = Column(Integer, ForeignKey("feeds.id"))
+    feed_id = Column(BigInteger)
 
     filename = Column(String(128))
     content = Column(BYTEA)
@@ -36,7 +37,7 @@ class Feed(IDBase, TimestampBase):
     is_active = Column(Boolean)
     updated_at = Column(DateTime)
 
-    data = relationship(FeedRawData, order_by=FeedRawData.chunk)
+    data = relationship(FeedsRawData, order_by=FeedsRawData.chunk)
 
     @property
     def raw_content(self):
@@ -83,13 +84,11 @@ class Indicators(IDBase, TimestampBase):
     created_by = Column(Integer)
     updated_at = Column(DateTime)
 
-    feeds = relationship(Feed, backref='indicators', secondary='indicator_feed_relationships')
-
-    UniqueConstraint(value, ioc_type, name='indicator_unique_value_type')
+    UniqueConstraint(value, ioc_type, name='indicators_unique_value_type')
 
 
 class IndicatorFeedRelationships(IDBase, TimestampBase):
     __tablename__ = "indicator_feed_relationships"
-    indicator_id = Column(Integer, ForeignKey("indicators.id"))
-    feed_id = Column(Integer, ForeignKey("feeds.id"))
+    indicator_id = Column(BigInteger)
+    feed_id = Column(BigInteger)
     deleted_at = Column(DateTime)
