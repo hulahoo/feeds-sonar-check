@@ -1,4 +1,4 @@
-from .parser import CSVParser, PlainTextParser, Stix2Parser
+from feeds_importing_worker.apps.importer.parser import CSVParser, PlainTextParser, Stix2Parser
 
 
 def get_parser(format: str):
@@ -9,4 +9,4 @@ def get_parser(format: str):
     elif format == 'stix2':
         return Stix2Parser()
     else:
-        raise Exception(f'Unknown format {format}')
+        raise TypeError(f'Unknown format {format}')

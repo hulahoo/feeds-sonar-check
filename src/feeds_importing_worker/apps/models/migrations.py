@@ -13,7 +13,7 @@ def create_migrations() -> None:
 
     # remove after
     with SyncPostgresDriver().session() as db:
-        db.execute("DROP TABLE IF EXISTS indicators;")
+        db.execute("DROP TABLE IF EXISTS indicators CASCADE;")
         db.flush()
         db.commit()
         logger.info("Table indicators dropped")
