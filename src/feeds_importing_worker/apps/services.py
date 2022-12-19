@@ -6,7 +6,7 @@ from feeds_importing_worker.config.log_conf import logger
 
 from feeds_importing_worker.apps.importer import get_parser
 from feeds_importing_worker.apps.constants import CHUNK_SIZE
-from feeds_importing_worker.apps.models.models import Feed, FeedsRawData
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData
 from feeds_importing_worker.apps.models.provider import FeedProvider, FeedRawDataProvider, IndicatorProvider
 
 
@@ -36,7 +36,7 @@ class FeedService:
         chunk_num = 1
 
         for chunk in self._download_raw_data(feed):
-            feed_raw_data = FeedsRawData(
+            feed_raw_data = FeedRawData(
                 feed_id=feed.id,
                 filename=feed.title,
                 content=chunk,

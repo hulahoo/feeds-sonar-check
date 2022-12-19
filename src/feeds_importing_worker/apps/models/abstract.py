@@ -6,7 +6,7 @@ from feeds_importing_worker.apps.models.base import Base
 class IDBase(Base):
     __abstract__ = True
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, index=True)
+    id = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True, index=True)
 
 
 class TimestampBase(Base):

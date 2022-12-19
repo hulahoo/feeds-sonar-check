@@ -1,6 +1,5 @@
 from dagster import job, repository, ScheduleDefinition, op
 
-from feeds_importing_worker.apps.models.migrations import create_migrations
 from feeds_importing_worker.apps.models.models import Feed
 from feeds_importing_worker.apps.services import FeedService
 from feeds_importing_worker.apps.models.provider import FeedProvider

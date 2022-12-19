@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import and_
 
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
-from feeds_importing_worker.apps.models.models import Feed, FeedsRawData, Indicators
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator
 
 
 class BaseProvider:
@@ -18,29 +18,29 @@ class FeedProvider(BaseProvider):
         return query.all()
 
     def clear_old_data(self, feed: Feed, clear_before: datetime):
-        query = self.session.query(FeedsRawData).filter(
-            FeedsRawData.created_at < clear_before
+        query = self.session.query(FeedRawData).filter(
+            FeedRawData.created_at < clear_before
         ).filter(
-            FeedsRawData.feed_id == feed.id
+            FeedRawData.feed_id == feed.id
         )
 
         query.delete()
 
 
 class FeedRawDataProvider(BaseProvider):
-    def add(self, feed_raw_data: FeedsRawData):
+    def add(self, feed_raw_data: FeedRawData):
         self.session.add(feed_raw_data)
 
 
 class IndicatorProvider(BaseProvider):
-    def add(self, indicator: Indicators):
+    def add(self, indicator: Indicator):
         self.session.add(indicator)
 
-    def get_by_value_type(self, value: str, type: str) -> Optional[Indicators]:
-        query = self.session.query(Indicators).filter(
+    def get_by_value_type(self, value: str, type: str) -> Optional[Indicator]:
+        query = self.session.query(Indicator).filter(
             and_(
-                Indicators.value == value,
-                Indicators.ioc_type == type
+                Indicator.value == value,
+                Indicator.ioc_type == type
             )
         )
 
