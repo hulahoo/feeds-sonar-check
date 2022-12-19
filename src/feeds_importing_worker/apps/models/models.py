@@ -1,5 +1,7 @@
+import uuid
+
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import JSONB, BYTEA
+from sqlalchemy.dialects.postgresql import JSONB, BYTEA, UUID
 from sqlalchemy import (
     Column, Integer, String, DateTime, Text, Boolean, UniqueConstraint,
     BigInteger, ForeignKey
@@ -65,9 +67,10 @@ class Feed(IDBase, TimestampBase):
         return self.id == other.id
 
 
-class Indicator(IDBase, TimestampBase):
+class Indicator(TimestampBase):
     __tablename__ = "indicators"
 
+    id = Column(UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4().hex)
     ioc_type = Column(String(16))
     value = Column(String(512))
     context = Column(JSONB)
@@ -91,6 +94,6 @@ class Indicator(IDBase, TimestampBase):
 
 class IndicatorFeedRelationship(IDBase, TimestampBase):
     __tablename__ = "indicator_feed_relationships"
-    indicator_id = Column(BigInteger, ForeignKey("indicators.id"))
+    indicator_id = Column(UUID, ForeignKey("indicators.id"))
     feed_id = Column(BigInteger, ForeignKey("feeds.id"))
     deleted_at = Column(DateTime)
