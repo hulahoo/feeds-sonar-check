@@ -1,4 +1,4 @@
-from feeds_importing_worker.apps.importer.parser import CSVParser, PlainTextParser, Stix2Parser, Stix1Parser, XMLParser
+from feeds_importing_worker.apps.importer.parser import CSVParser, PlainTextParser, Stix2Parser
 
 
 def get_parser(format: str):
