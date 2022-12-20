@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA, UUID
 from sqlalchemy import (
     Column, Integer, String, DateTime, Text, Boolean, UniqueConstraint,
-    BigInteger, ForeignKey
+    BigInteger, ForeignKey, DECIMAL
 )
 
 from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
@@ -71,13 +71,13 @@ class Indicator(TimestampBase):
     __tablename__ = "indicators"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4().hex)
-    ioc_type = Column(String(16))
+    ioc_type = Column(String(32))
     value = Column(String(512))
     context = Column(JSONB)
     is_sending_to_detections = Column(Boolean, default=True)
     is_false_positive = Column(Boolean, default=False)
-    ioc_weight = Column(Integer)
-    tags_weight = Column(Integer)
+    ioc_weight = Column(DECIMAL)
+    tags_weight = Column(DECIMAL)
     is_archived = Column(Boolean, default=False)
     false_detected_counter = Column(Integer)
     positive_detected_counter = Column(Integer)
@@ -94,6 +94,6 @@ class Indicator(TimestampBase):
 
 class IndicatorFeedRelationship(IDBase, TimestampBase):
     __tablename__ = "indicator_feed_relationships"
-    indicator_id = Column(UUID, ForeignKey("indicators.id"))
-    feed_id = Column(BigInteger, ForeignKey("feeds.id"))
+    indicator_id = Column(UUID, ForeignKey('indicators.id', ondelete='SET NULL'), nullable=True)
+    feed_id = Column(BigInteger, ForeignKey('feeds.id', ondelete='SET NULL'), nullable=True)
     deleted_at = Column(DateTime)
