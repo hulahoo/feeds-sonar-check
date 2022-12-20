@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import and_
 
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
-from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator, Job
 
 
 class BaseProvider:
@@ -45,3 +45,13 @@ class IndicatorProvider(BaseProvider):
         )
 
         return query.one_or_none()
+
+
+class JobProvider(BaseProvider):
+    def add(self, job: Job):
+        self.session.add(job)
+        self.session.commit()
+
+    def update(self, job: Job):
+        self.session.add(job)
+        self.session.commit()
