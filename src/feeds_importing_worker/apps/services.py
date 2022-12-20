@@ -6,6 +6,7 @@ from feeds_importing_worker.config.log_conf import logger
 
 from feeds_importing_worker.apps.importer import get_parser
 from feeds_importing_worker.apps.constants import CHUNK_SIZE
+from feeds_importing_worker.apps.enums import FeedStatus
 from feeds_importing_worker.apps.models.models import Feed, FeedRawData
 from feeds_importing_worker.apps.models.provider import FeedProvider, FeedRawDataProvider, IndicatorProvider
 
@@ -14,6 +15,7 @@ class FeedService:
     def __init__(self):
         self.indicator_provider = IndicatorProvider()
         self.feed_raw_data_provider = FeedRawDataProvider()
+        self.feed_provider = FeedProvider()
 
     def _download_raw_data(self, feed: Feed):
         auth = None
@@ -31,7 +33,6 @@ class FeedService:
     def update_raw_data(self, feed: Feed):
         logger.info(f'Start download feed {feed.provider} - {feed.title}...')
 
-        feed_provider = FeedProvider()
         now = datetime.now()
         chunk_num = 1
 
@@ -51,23 +52,29 @@ class FeedService:
         try:
             self.feed_raw_data_provider.session.commit()
         except Exception as e:
+            # TODO: add log
             self.feed_raw_data_provider.session.rollback()
             raise e
         else:
-            feed_provider.clear_old_data(feed, now)
-            feed_provider.session.commit()
+            self.feed_provider.clear_old_data(feed, now)
+            self.feed_provider.session.commit()
         finally:
-            feed_provider.session.close()
+            self.feed_provider.session.close()
 
     def parse(self, feed: Feed):
         logger.info(f'Start parsing feed {feed.provider} - {feed.title}...')
 
+        feed.status = FeedStatus.LOADING
+        self.feed_provider.update(feed)
+
         parser = get_parser(feed.format)
+        # TODO: log broken data
         new_indicators = parser.get_indicators(feed.raw_content)
 
         for new_indicator in new_indicators:
             indicator = self.indicator_provider.get_by_value_type(new_indicator.value, new_indicator.ioc_type)
 
+            # TODO: delete relationship
             if indicator:
                 if feed not in indicator.feeds:
                     indicator.feeds.append(self.indicator_provider.session.merge(feed))
@@ -82,6 +89,13 @@ class FeedService:
             self.indicator_provider.session.commit()
         except Exception as e:
             self.indicator_provider.session.rollback()
+
+            feed.status = FeedStatus.FAILED
+            self.feed_provider.update(feed)
+
             raise e
         finally:
             self.indicator_provider.session.close()
+
+            feed.status = FeedStatus.NORMAL
+            self.feed_provider.update(feed)

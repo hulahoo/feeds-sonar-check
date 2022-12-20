@@ -36,6 +36,7 @@ class Feed(IDBase, TimestampBase):
     polling_frequency = Column(String(32))
     weight = Column(Integer)
     parsing_rules = Column(JSONB)
+    status = Column(String(32))
     is_active = Column(Boolean)
     updated_at = Column(DateTime)
 
