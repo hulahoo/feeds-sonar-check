@@ -63,7 +63,7 @@ class Stix2Parser:
             if value.find(pattern) != -1:
                 return self.TYPE_MAPPING[pattern]
 
-    def get_indicators(self, data: str) -> Iterator[Indicator]:
+    def get_indicators(self, data: str, parsing_rules: json = None) -> Iterator[Indicator]:
         content = ''
 
         # TODO: сделать потоковый парсинг для больших файлов
@@ -102,7 +102,7 @@ class Stix1Parser:
         'AddressObj:Address_Value': 'ip',
     }
 
-    def get_indicators(self, data: str) -> Iterator[Indicator]:
+    def get_indicators(self, data: str, parsing_rules: json = None) -> Iterator[Indicator]:
         content = ''
 
         # TODO: сделать потоковый парсинг для больших файлов
