@@ -1,10 +1,8 @@
-import uuid
-
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA, UUID
 from sqlalchemy import (
     Column, Integer, String, DateTime, Text, Boolean, UniqueConstraint,
-    BigInteger, ForeignKey, DECIMAL
+    BigInteger, ForeignKey, DECIMAL, text
 )
 
 from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
@@ -71,7 +69,7 @@ class Feed(IDBase, TimestampBase):
 class Indicator(TimestampBase):
     __tablename__ = "indicators"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4().hex)
+    id = Column(UUID, primary_key=True, server_default=text("uuid_generate_v4()"))
     ioc_type = Column(String(32))
     value = Column(String(1024))
     context = Column(JSONB)
