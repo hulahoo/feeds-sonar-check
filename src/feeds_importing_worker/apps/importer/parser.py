@@ -84,37 +84,3 @@ class Stix2Parser:
                 ioc_type=self._get_type(stix_type),
                 value=value,
             )
-
-
-class Stix1Parser:
-    NAMESPACES = {
-        'stix': 'http://stix.mitre.org/stix-1',
-        'cyboxCommon': 'http://cybox.mitre.org/common-2',
-        'DomainNameObj': 'http://cybox.mitre.org/objects#DomainNameObject-1',
-        'URIObj': "http://cybox.mitre.org/objects#URIObject-2",
-        'AddressObj': "http://cybox.mitre.org/objects#AddressObject-2"
-    }
-
-    TYPE_MAPPING = {
-        'cyboxCommon:Simple_Hash_Value': 'hash',
-        'DomainNameObj:Value': 'domain',
-        'URIObj:Value': 'url',
-        'AddressObj:Address_Value': 'ip',
-    }
-
-    def get_indicators(self, data: str, parsing_rules: json = None) -> Iterator[Indicator]:
-        content = ''
-
-        # TODO: сделать потоковый парсинг для больших файлов
-        for value in data:
-            content += value
-
-        root = ElementTree.fromstring(content)
-
-        for element in root.findall(path='.//stix:Indicator', namespaces=self.NAMESPACES):
-            for selector in self.TYPE_MAPPING:
-                for value in element.findall(path=f'.//{selector}', namespaces=self.NAMESPACES):
-                    yield Indicator(
-                        ioc_type=self.TYPE_MAPPING[selector],
-                        value=value.text,
-                    )
