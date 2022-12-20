@@ -4,13 +4,18 @@ from sqlalchemy import inspect
 
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
-from feeds_importing_worker.apps.models.models import Indicator, IndicatorFeedRelationship, FeedRawData
+from feeds_importing_worker.apps.models.models import Indicator, IndicatorFeedRelationship, FeedRawData, Job
 
 
 def create_migrations() -> None:
     """Create migrations for Database"""
     engine: Engine = SyncPostgresDriver().engine
-    tables_list = [Indicator.__tablename__, IndicatorFeedRelationship.__tablename__, FeedRawData.__tablename__]
+    tables_list = [
+        Indicator.__tablename__,
+        IndicatorFeedRelationship.__tablename__,
+        FeedRawData.__tablename__,
+        Job.__tablename__,
+    ]
 
     if not inspect(engine).has_table("indicators"):
         Indicator.__table__.create(engine)
@@ -26,6 +31,12 @@ def create_migrations() -> None:
         tables_list.remove(FeedRawData.__tablename__)
         FeedRawData.__table__.create(SyncPostgresDriver().engine)
         logger.info("Table FeedsRawData created")
+
+    if not inspect(engine).has_table("jobs"):
+        tables_list.remove(Job.__tablename__)
+        Job.__table__.create(SyncPostgresDriver().engine)
+        logger.info("Table Job created")
+
 
     logger.info(f"Tables already exists: {tables_list}")
     logger.info("Migration applied successfully")

@@ -73,7 +73,7 @@ class Indicator(TimestampBase):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=lambda: uuid.uuid4().hex)
     ioc_type = Column(String(32))
-    value = Column(String(512))
+    value = Column(String(1024))
     context = Column(JSONB)
     is_sending_to_detections = Column(Boolean, default=True)
     is_false_positive = Column(Boolean, default=False)
@@ -98,3 +98,13 @@ class IndicatorFeedRelationship(IDBase, TimestampBase):
     indicator_id = Column(UUID, ForeignKey('indicators.id', ondelete='SET NULL'), nullable=True)
     feed_id = Column(BigInteger, ForeignKey('feeds.id', ondelete='SET NULL'), nullable=True)
     deleted_at = Column(DateTime)
+
+
+class Job(IDBase):
+    __tablename__ = "jobs"
+    service_name = Column(String(64))
+    title = Column(String(64))
+    result = Column(JSONB)
+    status = Column(String(16))
+    started_at = Column(DateTime)
+    finished_at = Column(DateTime)

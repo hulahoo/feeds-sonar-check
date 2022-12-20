@@ -69,7 +69,7 @@ class FeedService:
 
         parser = get_parser(feed.format)
         # TODO: log broken data
-        new_indicators = parser.get_indicators(feed.raw_content)
+        new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)
 
         for new_indicator in new_indicators:
             indicator = self.indicator_provider.get_by_value_type(new_indicator.value, new_indicator.ioc_type)
