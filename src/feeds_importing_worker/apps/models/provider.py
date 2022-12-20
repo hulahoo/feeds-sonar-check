@@ -12,6 +12,10 @@ class BaseProvider:
 
 
 class FeedProvider(BaseProvider):
+    def update(self, feed: Feed):
+        self.session.add(self.session.merge(feed))
+        self.session.commit()
+
     def get_all(self, is_active=True):
         query = self.session.query(Feed).filter(Feed.is_active == is_active)
 
