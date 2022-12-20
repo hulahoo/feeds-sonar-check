@@ -1,47 +1,22 @@
+psvc:
+  name: Воркер импорта фидов
+  description: Воркер импорта фидов
+  publishAPI: true
+
 replicaCount: 1
 
 resources:
   limits:
     memory: 1Gi
-    cpu: 1
+    cpu: 1000m
   requests:
     memory: 512Mi
     cpu: 100m
 
-env:
-  POSTGRES_SERVER: 10.7.77.7
-  POSTGRES_DB: mydb
-  POSTGRES_PORT: 5432
-  KAFKA_HOST: kafka.rshbdev.ru:9092
-  DATA_PROCCESSING_TOPIC: data_proccessing
-  ALLOW_ANONYMOUS_LOGIN: yes
-  ALLOW_PLAINTEXT_LISTENER: yes
-
-
-psvc:
-  name: Импорт фидов
-  description: Воркер Импорта и Дедубликации Фидов
-  istioSidecarSettings:
-    limits:
-      memory: 200Mi
-      cpu: 200m
-    requests:
-      memory: 50Mi
-      cpu: 10m
-
-vaultSecretKeys:
-  - POSTGRES_PASSWORD
-  - POSTGRES_USER
+databases:
+  - type: POSTGRESQL
+    host: 10.7.27.113
+    port: 5432
+    name: db
 
 strategyType: Recreate
-
-databases:
-    type: POSTGRESQL
-    host: 10.7.77.7
-    port: 5432
-    name: mydb
-
-kafkaClusters:
-  cluster-1:
-    topics:
-      data_proccessing:
