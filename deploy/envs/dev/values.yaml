@@ -1,0 +1,21 @@
+psvc:
+  name: Воркер импорта фидов
+  description: Воркер импорта фидов
+
+replicaCount: 1
+
+resources:
+  limits:
+    memory: 1Gi
+    cpu: 1000m
+  requests:
+    memory: 512Mi
+    cpu: 100m
+
+databases:
+  - type: POSTGRESQL
+    host: 10.7.27.113
+    port: 5432
+    name: db
+
+strategyType: Recreate

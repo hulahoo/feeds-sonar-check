@@ -10,7 +10,6 @@ log.log
 *.noseids
 .nyc_output
 .vscode-test
-*.env
 venv/**
 npm-debug.log
 **/.mypy_cache/**
@@ -107,4 +106,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-.vscode/
+.fleet
+.vscode
+*poetry.lock*
+*/static*/

@@ -19,22 +19,19 @@ source .venv/bin/activate
 ```
 pip3 install -r requirements.txt
 ```
-5. Запустите локальный сервер (только для разработки, будет использована sqlite БД)
+5. Запустите сервер
 ```
 - dagit -f main.py 
 ```
-появится веб интерфейс и по нему нужно будет перейти и запустить
+появится веб интерфейс и по нему можно запустить задачи
 
 
 ## Информаци о ENV-параметрах
 Имеющиеся env-параметры в проекте:
 ```
-POSTGRES_SERVER=""
-POSTGRES_DB=""
-POSTGRES_PORT=""
-
-KAFKA_HOST=
-EVENTS_COLLECTOR_TOPIC="" # topic куда будут отправлены данные полученные по SYSLOG
-ALLOW_ANONYMOUS_LOGIN=(yes/no) # для логина в zookeper
-ALLOW_PLAINTEXT_LISTENER=(yes/no)
+APP_POSTGRESQL_NAME=
+APP_POSTGRESQL_USER=
+APP_POSTGRESQL_PASSWORD=
+APP_POSTGRESQL_HOST=
+APP_POSTGRESQL_PORT=
 ```
