@@ -1,6 +1,7 @@
 psvc:
   name: Воркер импорта фидов
   description: Воркер импорта фидов
+  publishAPI: true
 
 replicaCount: 1
 
