@@ -71,6 +71,11 @@ class FeedService:
         # TODO: log broken data
         new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)
 
+        result = {
+            'feed': f'{feed.provider} - {feed.title}',
+            'indicators-processed': 0
+        }
+
         for new_indicator in new_indicators:
             indicator = self.indicator_provider.get_by_value_type(new_indicator.value, new_indicator.ioc_type)
 
@@ -84,6 +89,15 @@ class FeedService:
 
             self.indicator_provider.add(indicator)
             self.indicator_provider.session.flush()
+
+            result['indicators-processed'] += 1
+
+            if (
+                feed.is_truncating
+                and feed.max_records_count
+                and result['indicators-processed'] >= feed.max_records_count
+            ):
+                break
 
         try:
             self.indicator_provider.session.commit()
@@ -99,3 +113,5 @@ class FeedService:
 
             feed.status = FeedStatus.NORMAL
             self.feed_provider.update(feed)
+
+            return result

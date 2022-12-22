@@ -29,9 +29,9 @@ pip3 install -r requirements.txt
 ## Информаци о ENV-параметрах
 Имеющиеся env-параметры в проекте:
 ```
-SQL_DATABASE=
-SQL_USER=
-SQL_PASSWORD=
-SQL_HOST=
-SQL_PORT=
+APP_POSTGRESQL_NAME=
+APP_POSTGRESQL_USER=
+APP_POSTGRESQL_PASSWORD=
+APP_POSTGRESQL_HOST=
+APP_POSTGRESQL_PORT=
 ```

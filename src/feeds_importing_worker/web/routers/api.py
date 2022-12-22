@@ -1,8 +1,15 @@
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
+from datetime import datetime
 
 from feeds_importing_worker.config.log_conf import logger
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+
+from feeds_importing_worker.apps.models.provider import FeedProvider, JobProvider
+from feeds_importing_worker.apps.constants import SERVICE_NAME
+from feeds_importing_worker.apps.enums import JobStatus
+from feeds_importing_worker.apps.services import FeedService
+from feeds_importing_worker.apps.models.models import Job
 
 
 app = Flask(__name__)
@@ -68,3 +75,30 @@ def api_routes():
         },
         "paths": {}
         }
+
+
+@app.route('/api/force-update', methods=["GET"])
+def force_update():
+    feed_service = FeedService()
+    feed_provider = FeedProvider()
+    job_provider = JobProvider()
+
+    feeds = feed_provider.get_all()
+
+    for feed in feeds:
+        job_ = Job(
+            service_name=SERVICE_NAME,
+            title=f'{feed.provider} - {feed.title}',
+            started_at=datetime.now(),
+            status=JobStatus.IN_PROGRESS
+        )
+
+        job_provider.add(job_)
+
+        feed_service.update_raw_data(feed)
+        result = feed_service.parse(feed)
+
+        job_.status = JobStatus.SUCCESS
+        job_.result = result
+        job_.finished_at = datetime.now()
+        job_provider.update(job_)

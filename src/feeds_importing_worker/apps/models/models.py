@@ -37,6 +37,8 @@ class Feed(IDBase, TimestampBase):
     status = Column(String(32))
     is_active = Column(Boolean)
     updated_at = Column(DateTime)
+    is_truncating = Column(Boolean, default=False)
+    max_records_count = Column(DECIMAL)
 
     data = relationship(FeedRawData, order_by=FeedRawData.chunk)
 
@@ -66,6 +68,13 @@ class Feed(IDBase, TimestampBase):
         return self.id == other.id
 
 
+class IndicatorFeedRelationship(IDBase, TimestampBase):
+    __tablename__ = "indicator_feed_relationships"
+    indicator_id = Column(UUID, ForeignKey('indicators.id', ondelete='SET NULL'), nullable=True)
+    feed_id = Column(BigInteger, ForeignKey('feeds.id', ondelete='SET NULL'), nullable=True)
+    deleted_at = Column(DateTime)
+
+
 class Indicator(TimestampBase):
     __tablename__ = "indicators"
 
@@ -88,16 +97,14 @@ class Indicator(TimestampBase):
     created_by = Column(Integer)
     updated_at = Column(DateTime)
 
-    feeds = relationship(Feed, backref='indicators', secondary='indicator_feed_relationships')
+    feeds = relationship(
+        Feed,
+        backref='indicators',
+        secondary='indicator_feed_relationships',
+        primaryjoin=(IndicatorFeedRelationship.indicator_id == id and not IndicatorFeedRelationship.deleted_at)
+    )
 
     UniqueConstraint(value, ioc_type, name='indicators_unique_value_type')
-
-
-class IndicatorFeedRelationship(IDBase, TimestampBase):
-    __tablename__ = "indicator_feed_relationships"
-    indicator_id = Column(UUID, ForeignKey('indicators.id', ondelete='SET NULL'), nullable=True)
-    feed_id = Column(BigInteger, ForeignKey('feeds.id', ondelete='SET NULL'), nullable=True)
-    deleted_at = Column(DateTime)
 
 
 class Job(IDBase):
