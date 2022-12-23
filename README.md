@@ -81,7 +81,6 @@ ENTRYPOINT ["feeds-importing-worker"]
 ```yaml
 version: '3'
 
-
 services:
   postgres_db:
     image: postgres:13.8-alpine
@@ -90,9 +89,9 @@ services:
     expose:
       - 5432 
     environment:
-      POSTGRES_DB: db
-      POSTGRES_USER: dbuser
-      POSTGRES_PASSWORD: test
+        POSTGRES_DB: db
+        POSTGRES_USER: dbuser
+        POSTGRES_PASSWORD: test
 
   worker:
     restart: always
@@ -100,21 +99,14 @@ services:
     ports:
     - "8080:8080"
     environment:
-      EVENTS_PORT: 9000
-      EVENTS_HOST: 0.0.0.0
-      KAFKA_GROUP_ID: main
-      KAFKA_BOOTSTRAP_SERVER: kafka:9092
-      EVENTS_COLLECTOR_TOPIC: syslog
-
-      APP_POSTGRESQL_USER: dbuser
-      APP_POSTGRESQL_PASSWORD: test
-      APP_POSTGRESQL_NAME: db
-      APP_POSTGRESQL_HOST: postgres_db
-      APP_POSTGRESQL_PORT: 5432
+        APP_POSTGRESQL_USER: dbuser
+        APP_POSTGRESQL_PASSWORD: test
+        APP_POSTGRESQL_NAME: db
+        APP_POSTGRESQL_HOST: postgres_db
+        APP_POSTGRESQL_PORT: 5432
     depends_on:
       - postgres_db
 
- 
 networks:
     external:
       name: kafka_net
@@ -125,4 +117,11 @@ networks:
 docker-compose up --build
 ```
 
-## Накатка миграций происходит во время запуска консольной команды data-processing-worker.
+4. Применить дамп файла для бд в контейнере:
+```bash
+cat restore.sql | docker exec -i db psql -U dbuser -d db
+```
+
+5. Перзапустить контейнер worker
+
+## Накатка миграций происходит во время запуска консольной команды feeds-importing-worker.
