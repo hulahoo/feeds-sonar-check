@@ -5,7 +5,6 @@ import os
 from threading import Thread
 
 from feeds_importing_worker.config.log_conf import logger
-from feeds_importing_worker.apps.models.migrations import create_migrations
 from feeds_importing_worker.web.routers.api import execute as flask_app
 
 
@@ -22,9 +21,6 @@ def execute() -> None:
     2. Run Flask thread;
     3. Run Worker thread.
     """
-    logger.info("Run migrations...")
-    create_migrations()
-
     worker_thread: Thread = Thread(target=start_worker)
     flask_thread: Thread = Thread(target=flask_app)
 

@@ -123,5 +123,3 @@ cat restore.sql | docker exec -i db psql -U dbuser -d db
 ```
 
 5. Перзапустить контейнер worker
-
-## Накатка миграций происходит во время запуска консольной команды feeds-importing-worker.
