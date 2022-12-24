@@ -5,11 +5,11 @@ from datetime import datetime
 from feeds_importing_worker.config.log_conf import logger
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
-from feeds_importing_worker.apps.models.provider import FeedProvider, JobProvider
+from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider
 from feeds_importing_worker.apps.constants import SERVICE_NAME
 from feeds_importing_worker.apps.enums import JobStatus
 from feeds_importing_worker.apps.services import FeedService
-from feeds_importing_worker.apps.models.models import Job
+from feeds_importing_worker.apps.models.models import Process
 
 
 app = Flask(__name__)
@@ -81,24 +81,24 @@ def api_routes():
 def force_update():
     feed_service = FeedService()
     feed_provider = FeedProvider()
-    job_provider = JobProvider()
+    process_provider = ProcessProvider()
 
     feeds = feed_provider.get_all()
 
     for feed in feeds:
-        job_ = Job(
+        process_ = Process(
             service_name=SERVICE_NAME,
             title=f'{feed.provider} - {feed.title}',
             started_at=datetime.now(),
             status=JobStatus.IN_PROGRESS
         )
 
-        job_provider.add(job_)
+        process_provider.add(process_)
 
         feed_service.update_raw_data(feed)
         result = feed_service.parse(feed)
 
-        job_.status = JobStatus.SUCCESS
-        job_.result = result
-        job_.finished_at = datetime.now()
-        job_provider.update(job_)
+        process_.status = JobStatus.SUCCESS
+        process_.result = result
+        process_.finished_at = datetime.now()
+        process_provider.update(process_)

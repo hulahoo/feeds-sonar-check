@@ -2,8 +2,9 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import and_
 
+from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
-from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator, Job
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator, Process
 
 
 class BaseProvider:
@@ -51,11 +52,12 @@ class IndicatorProvider(BaseProvider):
         return query.one_or_none()
 
 
-class JobProvider(BaseProvider):
-    def add(self, job: Job):
-        self.session.add(job)
+class ProcessProvider(BaseProvider):
+    def add(self, process: Process):
+        self.session.add(process)
         self.session.commit()
 
-    def update(self, job: Job):
-        self.session.add(job)
+    def update(self, process: Process):
+        logger.info(f"Process to update: {process.id}")
+        self.session.add(process)
         self.session.commit()

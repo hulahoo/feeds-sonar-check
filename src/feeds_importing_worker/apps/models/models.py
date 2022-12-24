@@ -1,8 +1,7 @@
-from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA, UUID
 from sqlalchemy import (
-    Column, Integer, String, DateTime, Text, Boolean, UniqueConstraint,
-    BigInteger, ForeignKey, DECIMAL, text
+    Column, Integer, String, DateTime, Boolean, UniqueConstraint,
+    BigInteger,  DECIMAL, text
 )
 
 from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
@@ -11,7 +10,7 @@ from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
 class FeedRawData(IDBase, TimestampBase):
     __tablename__ = "feeds_raw_data"
 
-    feed_id = Column(BigInteger, ForeignKey("feeds.id"))
+    feed_id = Column(BigInteger)
 
     filename = Column(String(128))
     content = Column(BYTEA)
@@ -23,24 +22,25 @@ class Feed(IDBase, TimestampBase):
 
     title = Column(String(128))
     provider = Column(String(128))
+    description = Column(String(255))
     format = Column(String(8))
     url = Column(String(128))
     auth_type = Column(String(16))
-    auth_api_token = Column(Text)
+    auth_api_token = Column(String(255))
     auth_login = Column(String(32))
     auth_pass = Column(String(32))
-    certificate = Column(Text)
-    use_taxii = Column(Boolean)
+    certificate = Column(BYTEA)
+    use_taxii = Column(Boolean, default=False)
     polling_frequency = Column(String(32))
-    weight = Column(Integer)
+    weight = Column(DECIMAL())
+    available_fields = Column(JSONB)
     parsing_rules = Column(JSONB)
     status = Column(String(32))
-    is_active = Column(Boolean)
-    updated_at = Column(DateTime)
-    is_truncating = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    is_truncating = Column(Boolean, default=True)
     max_records_count = Column(DECIMAL)
+    updated_at = Column(DateTime)
 
-    data = relationship(FeedRawData, order_by=FeedRawData.chunk)
 
     @property
     def raw_content(self):
@@ -70,8 +70,8 @@ class Feed(IDBase, TimestampBase):
 
 class IndicatorFeedRelationship(IDBase, TimestampBase):
     __tablename__ = "indicator_feed_relationships"
-    indicator_id = Column(UUID, ForeignKey('indicators.id', ondelete='SET NULL'), nullable=True)
-    feed_id = Column(BigInteger, ForeignKey('feeds.id', ondelete='SET NULL'), nullable=True)
+    indicator_id = Column(UUID(as_uuid=True))
+    feed_id = Column(BigInteger)
     deleted_at = Column(DateTime)
 
 
@@ -89,29 +89,23 @@ class Indicator(TimestampBase):
     time_weight = Column(DECIMAL)
     tags_weight = Column(DECIMAL)
     is_archived = Column(Boolean, default=False)
-    false_detected_counter = Column(Integer)
-    positive_detected_counter = Column(Integer)
-    total_detected_counter = Column(Integer)
+    false_detected_counter = Column(BigInteger)
+    positive_detected_counter = Column(BigInteger)
+    total_detected_counter = Column(BigInteger)
     first_detected_at = Column(DateTime)
     last_detected_at = Column(DateTime)
-    created_by = Column(Integer)
+    created_by = Column(BigInteger)
     updated_at = Column(DateTime)
-
-    feeds = relationship(
-        Feed,
-        backref='indicators',
-        secondary='indicator_feed_relationships',
-        primaryjoin=(IndicatorFeedRelationship.indicator_id == id and not IndicatorFeedRelationship.deleted_at)
-    )
 
     UniqueConstraint(value, ioc_type, name='indicators_unique_value_type')
 
 
-class Job(IDBase):
-    __tablename__ = "jobs"
+class Process(IDBase):
+    __tablename__ = "processes"
+    parent_id = Column(BigInteger, nullable=True)
     service_name = Column(String(64))
-    title = Column(String(64))
+    title = Column(String(128))
     result = Column(JSONB)
-    status = Column(String(16))
+    status = Column(String(32))
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
