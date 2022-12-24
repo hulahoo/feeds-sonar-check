@@ -5,7 +5,7 @@
 ## Информация о файлах конфигурации
 Все конфигурции можно найти в директории:
 ```bash
-src/events_gateway/config
+src/feeds_importing_worker/config
 ```
 
 ## Информаци о ENV-параметрах
