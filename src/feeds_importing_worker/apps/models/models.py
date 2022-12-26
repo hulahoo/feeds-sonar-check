@@ -1,7 +1,8 @@
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA, UUID
 from sqlalchemy import (
     Column, Integer, String, DateTime, Boolean, UniqueConstraint,
-    BigInteger,  DECIMAL, text
+    BigInteger,  DECIMAL, text, ForeignKey
 )
 
 from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
@@ -10,7 +11,7 @@ from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
 class FeedRawData(IDBase, TimestampBase):
     __tablename__ = "feeds_raw_data"
 
-    feed_id = Column(BigInteger)
+    feed_id = Column(BigInteger, ForeignKey('feeds.id'), nullable=True)
 
     filename = Column(String(128))
     content = Column(BYTEA)
@@ -41,6 +42,8 @@ class Feed(IDBase, TimestampBase):
     max_records_count = Column(DECIMAL)
     updated_at = Column(DateTime)
 
+    data = relationship(FeedRawData, order_by=FeedRawData.chunk)
+
 
     @property
     def raw_content(self):
@@ -70,8 +73,8 @@ class Feed(IDBase, TimestampBase):
 
 class IndicatorFeedRelationship(IDBase, TimestampBase):
     __tablename__ = "indicator_feed_relationships"
-    indicator_id = Column(UUID(as_uuid=True))
-    feed_id = Column(BigInteger)
+    indicator_id = Column(UUID(as_uuid=True), ForeignKey('indicators.id'), nullable=True)
+    feed_id = Column(BigInteger, ForeignKey('feeds.id'), nullable=True)
     deleted_at = Column(DateTime)
 
 
@@ -96,6 +99,13 @@ class Indicator(TimestampBase):
     last_detected_at = Column(DateTime)
     created_by = Column(BigInteger)
     updated_at = Column(DateTime)
+
+    feeds = relationship(
+        Feed,
+        backref='indicators',
+        secondary='indicator_feed_relationships',
+        primaryjoin=(IndicatorFeedRelationship.indicator_id == id and not IndicatorFeedRelationship.deleted_at)
+    )
 
     UniqueConstraint(value, ioc_type, name='indicators_unique_value_type')
 
