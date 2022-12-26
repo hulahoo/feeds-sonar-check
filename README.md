@@ -11,11 +11,11 @@ src/feeds_importing_worker/config
 ## Информаци о ENV-параметрах
 Имеющиеся env-параметры в проекте:
 ```
-APP_POSTGRESQL_NAME=
-APP_POSTGRESQL_USER=
-APP_POSTGRESQL_PASSWORD=
-APP_POSTGRESQL_HOST=
-APP_POSTGRESQL_PORT=
+APP_POSTGRESQL_NAME=test_name
+APP_POSTGRESQL_USER=user
+APP_POSTGRESQL_PASSWORD=password
+APP_POSTGRESQL_HOST=localhost
+APP_POSTGRESQL_PORT=5432
 ```
 
 
@@ -49,6 +49,21 @@ python3 -m pip install .
 ```bash
 feeds-importing-worker
 ```
+
+### Требования к инфраструктуре
+1. Минимальная версия Kafka:
+  ```yaml
+    wurstmeister/kafka:>=2.13-2.7.2
+  ```
+2. Минимальная версия Postgres:
+  ```yaml
+    postgres:>=14-alpine
+  ```
+3. Минимальная версия zookeper:
+  ```yaml
+    wurstmeister/zookeeper
+  ```
+
 
 ### Запуск с помощью Dockerfile
 
