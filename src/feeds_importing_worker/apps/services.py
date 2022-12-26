@@ -65,25 +65,36 @@ class FeedService:
         logger.info(f'Start parsing feed {feed.provider} - {feed.title}...')
 
         feed.status = FeedStatus.LOADING
+        logger.debug('Start to update feed provider')
         self.feed_provider.update(feed)
+        logger.debug('Feed provider updated')
 
         parser = get_parser(feed.format)
         # TODO: log broken data
+        logger.debug('Start to get indicators')
+        data = self.feed_raw_data_provider.get_feed_data_content(feed)
         new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)
 
         result = {
             'feed': f'{feed.provider} - {feed.title}',
             'indicators-processed': 0
         }
-
+        logger.debug(f"result = {result}")
+        count = 0
         for new_indicator in new_indicators:
+            count +=1
+            if count % 20 == 0:
+                logger.debug(f'count - {count}')
+                logger.debug(f'Indicator info: value -{new_indicator.value}, ioc_type - {new_indicator.ioc_type}')
             indicator = self.indicator_provider.get_by_value_type(new_indicator.value, new_indicator.ioc_type)
 
             # TODO: delete relationship
             if indicator:
                 if feed not in indicator.feeds:
+                    logger.debug(f'Append feed to indicator')
                     indicator.feeds.append(self.indicator_provider.session.merge(feed))
             else:
+                # logger.debug(f'Create new indicator')
                 indicator = new_indicator
                 indicator.feeds = [self.indicator_provider.session.merge(feed)]
 
@@ -97,21 +108,55 @@ class FeedService:
                 and feed.max_records_count
                 and result['indicators-processed'] >= feed.max_records_count
             ):
+                logger.debug('Proceeding indicators broken')
                 break
-
+            #TODO добавить коммит на каждые 5000 записей
         try:
             self.indicator_provider.session.commit()
         except Exception as e:
             self.indicator_provider.session.rollback()
-
+            logger.debug('Error occurred during commit data')
             feed.status = FeedStatus.FAILED
             self.feed_provider.update(feed)
 
             raise e
         finally:
             self.indicator_provider.session.close()
-
+            logger.debug('All fine')
             feed.status = FeedStatus.NORMAL
             self.feed_provider.update(feed)
 
-            return result
+        return result
+
+    def delete_indicators(self, feed: Feed):
+        logger.info(f'Start soft deleting indicators for feed {feed.provider} - {feed.title}...')
+        indicators = self.indicator_provider.get_indicators_without_feeds()
+        logger.debug('Indicators without feeds fetched')
+
+        now = datetime.now()
+
+        result = {
+            'feed': f'{feed.provider} - {feed.title}',
+            'indicators-processed': 0
+        }
+
+        if indicators:
+            logger.debug('There are indicators to be deleted')
+            for indicator in indicators:
+                result['indicators-processed'] += 1
+                indicator.updated_at = now
+                self.indicator_provider.add(indicator)
+                self.indicator_provider.session.flush()
+
+            try:
+                self.indicator_provider.session.commit()
+            except Exception as e:
+                self.indicator_provider.session.rollback()
+                logger.debug('Error occurred during commit data')
+                feed.status = FeedStatus.FAILED
+                raise e
+            finally:
+                self.indicator_provider.session.close()
+                logger.debug('All fine')
+
+        return result

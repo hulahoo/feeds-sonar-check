@@ -98,7 +98,7 @@ version: '3'
 
 services:
   postgres_db:
-    image: postgres:13.8-alpine
+    image: postgres:14-alpine
     container_name: db
     restart: unless-stopped
     expose:
