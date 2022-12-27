@@ -102,3 +102,10 @@ def force_update():
         process_.result = result
         process_.finished_at = datetime.now()
         process_provider.update(process_)
+    feed_service.soft_delete_indicators_without_feeds()
+
+    return app.response_class(
+        response={"status": "FINISHED"},
+        status=200,
+        mimetype=mimetype
+    )

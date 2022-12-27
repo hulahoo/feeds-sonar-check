@@ -27,7 +27,7 @@ def update_feed(feed: Feed):
 
         feed_service.update_raw_data(feed)
         result = feed_service.parse(feed)
-        #TODO soft delete
+        feed_service.soft_delete_indicators_without_feeds()
         process_.status = JobStatus.SUCCESS
         process_.result = result
         process_.finished_at = datetime.now()
