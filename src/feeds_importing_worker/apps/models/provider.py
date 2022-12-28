@@ -73,7 +73,8 @@ class IndicatorProvider(BaseProvider):
 
     def get_indicators_without_feeds(self) -> Optional[Indicator]:
         query = self.session.query(Indicator).filter(
-            ~Indicator.id.in_(self.session.query(IndicatorFeedRelationship.indicator_id)))
+            ~Indicator.id.in_(self.session.query(IndicatorFeedRelationship.indicator_id).filter(
+                IndicatorFeedRelationship.deleted_at == None)))
 
         result = query.all()
         logger.debug(f'get_indicators_without_feeds - len result - {len(result)}')
@@ -81,15 +82,19 @@ class IndicatorProvider(BaseProvider):
         return result
 
     def get_id_set_for_feeds_current_indicators(self, feed: Feed):
+        logger.debug(f"feed id - {feed.id}")
         query = self.session.query(IndicatorFeedRelationship.indicator_id).filter(
-            IndicatorFeedRelationship.feed_id == feed.id)
+            IndicatorFeedRelationship.feed_id == feed.id).filter(IndicatorFeedRelationship.deleted_at == None)
         return [str(item.indicator_id) for item in query.all()]
 
-    def delete_relations(self, indicators_id):
+    def soft_delete_relations(self, indicators_id):
         logger.debug(f"Total count of relations for deleting - {len(indicators_id)}")
+        now = datetime.now()
         for indicator_id in indicators_id:
-            self.session.query(IndicatorFeedRelationship).filter(
-                IndicatorFeedRelationship.indicator_id == indicator_id).delete()
+            feed_relation = self.session.query(IndicatorFeedRelationship).filter(
+                IndicatorFeedRelationship.indicator_id == indicator_id).first()
+            feed_relation.deleted_at = now
+            self.session.add(feed_relation)
         self.session.commit()
 
 

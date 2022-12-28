@@ -100,7 +100,7 @@ class FeedService:
 
         try:
             if old_indicators_id_list:
-                self.indicator_provider.delete_relations(old_indicators_id_list)
+                self.indicator_provider.soft_delete_relations(old_indicators_id_list)
             self.indicator_provider.session.commit()
         except Exception as e:
             self.indicator_provider.session.rollback()
