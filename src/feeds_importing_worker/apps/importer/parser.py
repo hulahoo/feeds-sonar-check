@@ -1,7 +1,7 @@
 import csv
 import json
 
-from xml.etree import ElementTree
+from jsonpath_ng import parse
 from typing import Iterator
 
 from feeds_importing_worker.apps.importer.utils import ParsingRules
@@ -84,3 +84,26 @@ class Stix2Parser:
                 ioc_type=self._get_type(stix_type),
                 value=value,
             )
+
+
+class JsonParser:
+    def get_indicators(self, data: str, parsing_rules: json = None) -> Iterator[Indicator]:
+        content = ''
+
+        # TODO: сделать потоковый парсинг для больших файлов
+        for value in data:
+            content += value
+
+        indicators = json.loads(content)
+
+        jsonpath_expression = parse(parsing_rules['prefix'])
+
+        for match in jsonpath_expression.find(indicators):
+
+            json_type = match.value[parsing_rules['ioc-type']]
+
+            if json_type in parsing_rules['type_mapping']:
+                yield Indicator(
+                    ioc_type=parsing_rules['type_mapping'][json_type],
+                    value=match.value[parsing_rules['ioc-value']],
+                )

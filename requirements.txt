@@ -10,3 +10,4 @@ prometheus-client==0.15.0
 environs==9.5.0
 dagster==1.1.6
 dagit==1.1.6
+jsonpath-ng==1.5.3
