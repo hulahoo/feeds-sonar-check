@@ -14,6 +14,7 @@ install_requires = [
     ('environs', '9.5.0'),
     ('dagster', '1.1.6'),
     ('dagit', '1.1.6'),
+    ('jsonpath-ng', '1.5.3'),
 ]
 
 CI_PROJECT_NAME = os.environ.get("CI_PROJECT_NAME", "feeds-importing-worker")

@@ -44,7 +44,6 @@ class Feed(IDBase, TimestampBase):
 
     data = relationship(FeedRawData, order_by=FeedRawData.chunk)
 
-
     @property
     def raw_content(self):
         pending = None
