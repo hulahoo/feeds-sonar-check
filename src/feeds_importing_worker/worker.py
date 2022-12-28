@@ -1,4 +1,4 @@
-from dagster import job, repository, ScheduleDefinition, op
+from dagster import job, repository, ScheduleDefinition, op, DefaultScheduleStatus
 from datetime import datetime
 
 from feeds_importing_worker.apps.models.models import Feed, Process
@@ -51,6 +51,7 @@ def feeds_repository():
             ScheduleDefinition(
                 job=update_feed(feed),
                 cron_schedule=feed.polling_frequency,
+                default_status=DefaultScheduleStatus.RUNNING
             )
         )
 
