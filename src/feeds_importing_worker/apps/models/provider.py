@@ -35,32 +35,6 @@ class FeedRawDataProvider(BaseProvider):
     def add(self, feed_raw_data: FeedRawData):
         self.session.add(feed_raw_data)
 
-    def get_feed_data_content(self, feed: Feed):
-        query = self.session.query(FeedRawData.content).filter(
-            FeedRawData.feed_id == feed.id
-        ).order_by(FeedRawData.chunk)
-        feed_raw_data = query.all()
-
-        pending = None
-
-        for data in feed_raw_data:
-            content = data.content.decode('utf-8')
-
-            if pending is not None:
-                content = pending + content
-
-            lines = content.split('\n')
-
-            if lines and lines[-1] and content and lines[-1][-1] == content[-1]:
-                pending = lines.pop()
-            else:
-                pending = None
-
-            yield from lines
-
-        if pending is not None:
-            yield pending
-
 
 class IndicatorProvider(BaseProvider):
     def add(self, indicator: Indicator):

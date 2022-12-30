@@ -73,8 +73,7 @@ class FeedService:
         parser = get_parser(feed.format)
 
         logger.debug('Start to get indicators')
-        data = self.feed_raw_data_provider.get_feed_data_content(feed)
-        new_indicators = parser.get_indicators(data, feed.parsing_rules)
+        new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)
         old_indicators_id_list = self.indicator_provider.get_id_set_for_feeds_current_indicators(feed)
         len_old = 0
 
@@ -101,18 +100,22 @@ class FeedService:
         try:
             if old_indicators_id_list:
                 self.indicator_provider.soft_delete_relations(old_indicators_id_list)
+
             self.indicator_provider.session.commit()
         except Exception as e:
-            self.indicator_provider.session.rollback()
             logger.debug('Error occurred during commit data')
+            self.indicator_provider.session.rollback()
             feed.status = FeedStatus.FAILED
-            self.feed_provider.update(feed)
+
             raise e
-        finally:
-            self.indicator_provider.session.close()
+        else:
             logger.debug('All fine')
             feed.status = FeedStatus.NORMAL
+        finally:
+            self.indicator_provider.session.close()
+
             self.feed_provider.update(feed)
+
         logger.debug(f"result = {result}")
         logger.debug(f"Len of old_indicators_id_list - {len_old}, new len after work- {len(old_indicators_id_list)}")
 

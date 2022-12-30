@@ -16,22 +16,22 @@ process_provider = ProcessProvider()
 def update_feed(feed: Feed):
     @op(name=feed.provider + '_op')
     def op_fn():
-        process_ = Process(
+        process = Process(
             service_name=SERVICE_NAME,
             title=f'{feed.provider} - {feed.title}',
             started_at=datetime.now(),
             status=JobStatus.IN_PROGRESS
         )
 
-        process_provider.add(process_)
+        process_provider.add(process)
 
         feed_service.update_raw_data(feed)
         result = feed_service.parse(feed)
         feed_service.soft_delete_indicators_without_feeds()
-        process_.status = JobStatus.SUCCESS
-        process_.result = result
-        process_.finished_at = datetime.now()
-        process_provider.update(process_)
+        process.status = JobStatus.SUCCESS
+        process.result = result
+        process.finished_at = datetime.now()
+        process_provider.update(process)
 
     @job(name=feed.provider)
     def process_fn():
