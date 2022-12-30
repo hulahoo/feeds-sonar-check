@@ -111,10 +111,12 @@ class Indicator(TimestampBase):
 
 class Process(IDBase):
     __tablename__ = "processes"
-    parent_id = Column(BigInteger, nullable=True)
+    parent_id = Column(BigInteger, ForeignKey('processes.id'), nullable=True)
     service_name = Column(String(64))
     title = Column(String(128))
     result = Column(JSONB)
     status = Column(String(32))
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
+
+    children = relationship('Process')

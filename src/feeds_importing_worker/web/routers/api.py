@@ -18,6 +18,10 @@ csrf.init_app(app)
 
 mimetype = 'application/json'
 
+feed_service = FeedService()
+feed_provider = FeedProvider()
+process_provider = ProcessProvider()
+
 
 def execute():
     """
@@ -77,32 +81,64 @@ def api_routes():
         }
 
 
-@app.route('/api/force-update', methods=["GET"])
-def force_update():
-    feed_service = FeedService()
-    feed_provider = FeedProvider()
-    process_provider = ProcessProvider()
-
+def _update_feeds(parent_process: Process):
     feeds = feed_provider.get_all()
 
     for feed in feeds:
-        process_ = Process(
+        process = Process(
             service_name=SERVICE_NAME,
             title=f'{feed.provider} - {feed.title}',
             started_at=datetime.now(),
-            status=JobStatus.IN_PROGRESS
+            status=JobStatus.IN_PROGRESS,
+            parent_id=parent_process.id
         )
 
-        process_provider.add(process_)
+        process_provider.add(process)
 
         feed_service.update_raw_data(feed)
         result = feed_service.parse(feed)
 
-        process_.status = JobStatus.SUCCESS
-        process_.result = result
-        process_.finished_at = datetime.now()
-        process_provider.update(process_)
+        process.status = JobStatus.SUCCESS
+        process.result = result
+        process.finished_at = datetime.now()
+        process_provider.update(process)
+
+
+def _remove_old_relatioins(parent_process: Process):
+    process = Process(
+        service_name=SERVICE_NAME,
+        title='remove old relations',
+        started_at=datetime.now(),
+        status=JobStatus.IN_PROGRESS,
+        parent_id=parent_process.id
+    )
+
+    process_provider.add(process)
+
     feed_service.soft_delete_indicators_without_feeds()
+
+    process.status = JobStatus.SUCCESS
+    process.finished_at = datetime.now()
+    process_provider.update(process)
+
+
+@app.route('/api/force-update', methods=["GET"])
+def force_update():
+    process = Process(
+        service_name=SERVICE_NAME,
+        title='feeds parsing',
+        started_at=datetime.now(),
+        status=JobStatus.IN_PROGRESS
+    )
+
+    process_provider.add(process)
+
+    _update_feeds(process)
+    _remove_old_relatioins(process)
+
+    process.status = JobStatus.SUCCESS
+    process.finished_at = datetime.now()
+    process_provider.update(process)
 
     return app.response_class(
         response={"status": "FINISHED"},
