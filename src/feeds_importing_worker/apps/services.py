@@ -31,6 +31,12 @@ class FeedService:
             for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
                 yield chunk
 
+    def get_preview(self, feed: Feed):
+        for chunk in self._download_raw_data(feed):
+            feed.data.append(FeedRawData(content=chunk, chunk=1))
+
+            return feed.raw_content
+
     def update_raw_data(self, feed: Feed):
         logger.info(f'Start download feed {feed.provider} - {feed.title}...')
 

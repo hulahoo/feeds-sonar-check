@@ -1,6 +1,7 @@
-from flask import Flask
+from flask import Flask, request
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
+from requests.exceptions import RequestException
 
 from feeds_importing_worker.config.log_conf import logger
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
@@ -163,4 +164,35 @@ def force_update():
         response={"status": "FINISHED"},
         status=200,
         mimetype=mimetype
+    )
+
+
+@app.route('/api/preview', methods=["GET"])
+def preview():
+    PREVIEW_MAX_LINES = 50
+
+    try:
+        preview = feed_service.get_preview(Feed(
+            url=request.args.get('url'),
+            auth_type=request.args.get('auth_type', None),
+            auth_login=request.args.get('auth_login', None),
+            auth_pass=request.args.get('auth_pass', None),
+        ))
+    except RequestException as e:
+        result = 'preview unavailable'
+        logger.warning(f'Unable to get feed preview: {e}')
+    else:
+        result = []
+
+        for _ in range(PREVIEW_MAX_LINES):
+            try:
+                result.append(next(preview))
+            except StopIteration:
+                break
+
+    return app.response_class(
+        response=result,
+        status=200,
+        mimetype='text/plain',
+        content_type=CONTENT_TYPE_LATEST
     )
