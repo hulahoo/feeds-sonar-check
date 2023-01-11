@@ -1,5 +1,6 @@
 import requests
 from requests.auth import HTTPBasicAuth
+from requests.exceptions import RequestException
 
 from datetime import datetime
 from feeds_importing_worker.config.log_conf import logger
@@ -36,18 +37,22 @@ class FeedService:
         now = datetime.now()
         chunk_num = 1
 
-        for chunk in self._download_raw_data(feed):
-            feed_raw_data = FeedRawData(
-                feed_id=feed.id,
-                filename=feed.title,
-                content=chunk,
-                chunk=chunk_num,
-                created_at=now
-            )
+        try:
+            for chunk in self._download_raw_data(feed):
+                feed_raw_data = FeedRawData(
+                    feed_id=feed.id,
+                    filename=feed.title,
+                    content=chunk,
+                    chunk=chunk_num,
+                    created_at=now
+                )
 
-            chunk_num += 1
+                chunk_num += 1
 
-            self.feed_raw_data_provider.add(feed_raw_data)
+                self.feed_raw_data_provider.add(feed_raw_data)
+        except RequestException as e:
+            logger.error(f'Failed to update feed data: {e}')
+            return
 
         try:
             self.feed_raw_data_provider.session.commit()
