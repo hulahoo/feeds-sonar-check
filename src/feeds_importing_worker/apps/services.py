@@ -5,7 +5,7 @@ from requests.exceptions import RequestException
 from datetime import datetime
 from feeds_importing_worker.config.log_conf import logger
 
-from feeds_importing_worker.apps.importer import get_parser
+from feeds_importing_worker.apps.importer import get_parser, IParser
 from feeds_importing_worker.apps.constants import CHUNK_SIZE
 from feeds_importing_worker.apps.enums import FeedStatus
 from feeds_importing_worker.apps.models.models import Feed, FeedRawData
@@ -21,9 +21,10 @@ class FeedService:
     def _download_raw_data(self, feed: Feed):
         auth = None
 
-        # TODO: implement token auth
         if feed.auth_type == 'basic':
             auth = HTTPBasicAuth(feed.auth_login, feed.auth_pass)
+        if feed.auth_type == 'token':
+            raise NotImplementedError('Not implemented auth type - token')
 
         with requests.get(feed.url, auth=auth, stream=True) as r:
             r.raise_for_status()
@@ -81,7 +82,7 @@ class FeedService:
         logger.debug('Feed provider updated')
 
         now = datetime.now()
-        parser = get_parser(feed.format)
+        parser: IParser = get_parser(feed.format)
 
         logger.debug('Start to get indicators')
         new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)

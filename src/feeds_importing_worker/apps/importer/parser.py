@@ -1,6 +1,9 @@
 import csv
 import json
 
+from abc import ABC, abstractmethod
+from io import StringIO
+from xml.etree import ElementTree
 from jsonpath_ng import parse
 from typing import Iterator
 
@@ -8,7 +11,13 @@ from feeds_importing_worker.apps.importer.utils import ParsingRules
 from feeds_importing_worker.apps.models.models import Indicator
 
 
-class PlainTextParser:
+class IParser(ABC):
+    @abstractmethod
+    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
+        pass
+
+
+class PlainTextParser(IParser):
     def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
         parsing_rules = ParsingRules(parsing_rules)
 
@@ -22,7 +31,7 @@ class PlainTextParser:
             )
 
 
-class CSVParser:
+class CSVParser(IParser):
     def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
         parsing_rules = ParsingRules(parsing_rules)
 
@@ -49,7 +58,7 @@ class CSVParser:
             )
 
 
-class Stix2Parser:
+class Stix2Parser(IParser):
     TYPE_MAPPING = {
         'hashes': 'hash',
         'domain': 'domain',
@@ -66,7 +75,6 @@ class Stix2Parser:
     def get_indicators(self, data: str, parsing_rules: json = None) -> Iterator[Indicator]:
         content = ''
 
-        # TODO: сделать потоковый парсинг для больших файлов
         for value in data:
             content += value
 
@@ -86,11 +94,10 @@ class Stix2Parser:
             )
 
 
-class JsonParser:
-    def get_indicators(self, data: str, parsing_rules: json = None) -> Iterator[Indicator]:
+class JsonParser(IParser):
+    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
         content = ''
 
-        # TODO: сделать потоковый парсинг для больших файлов
         for value in data:
             content += value
 
@@ -107,3 +114,62 @@ class JsonParser:
                     ioc_type=parsing_rules['type_mapping'][json_type],
                     value=match.value[parsing_rules['ioc-value']],
                 )
+
+
+class Stix1Parser(IParser):
+    TYPE_MAPPING = {
+        'cyboxCommon:Simple_Hash_Value': 'hash',
+        'DomainNameObj:Value': 'domain',
+        'URIObj:Value': 'url',
+        'AddressObj:Address_Value': 'ip',
+    }
+
+    def _get_ns(self, content):
+        content_io = StringIO(content)
+        events = "start", "start-ns"
+        ns = {}
+
+        for event, elem in ElementTree.iterparse(content_io, events):
+            if event == "start-ns":
+                ns[elem[0]] = "%s" % elem[1]
+
+        return ns
+
+    def get_indicators(self, data: str, parsing_rules: json = None) -> Iterator[Indicator]:
+        content = ''
+
+        for value in data:
+            content += value
+
+        root = ElementTree.fromstring(content)
+        ns = self._get_ns(content)
+
+        for element in root.findall(path='.//stix:Indicator', namespaces=ns):
+            for selector in self.TYPE_MAPPING:
+                for value in element.findall(path=f'.//{selector}', namespaces=ns):
+                    yield Indicator(
+                        ioc_type=self.TYPE_MAPPING[selector],
+                        value=value.text,
+                    )
+
+
+class XMLParser(IParser):
+    def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
+        content = ''
+
+        for value in data:
+            content += value
+
+        root = ElementTree.fromstring(content)
+
+        xmlns = root.tag.split('}')[0].strip('{')
+
+        namespaces = {
+            'xmlns': xmlns
+        }
+
+        for value in root.findall(path=f'.//xmlns:{parsing_rules["ioc-value"]}', namespaces=namespaces):
+            yield Indicator(
+                ioc_type=parsing_rules['ioc-type'],
+                value=value.text,
+            )
