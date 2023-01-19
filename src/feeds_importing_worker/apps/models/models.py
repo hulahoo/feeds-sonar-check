@@ -31,7 +31,7 @@ class Feed(IDBase, TimestampBase):
     auth_login = Column(String(32))
     auth_pass = Column(String(32))
     certificate = Column(BYTEA)
-    use_taxii = Column(Boolean, default=False)
+    is_use_taxii = Column(Boolean, default=False)
     polling_frequency = Column(String(32))
     weight = Column(DECIMAL())
     available_fields = Column(JSONB)
