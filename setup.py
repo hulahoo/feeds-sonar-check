@@ -12,8 +12,8 @@ install_requires = [
     ('alembic', '1.8.1'),
     ('prometheus-client', '0.15.0'),
     ('environs', '9.5.0'),
-    ('dagster', '1.1.10'),
-    ('dagit', '1.1.10'),
+    ('dagster', '1.1.13'),
+    ('dagit', '1.1.13'),
     ('jsonpath-ng', '1.5.3'),
 ]
 

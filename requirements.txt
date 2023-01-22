@@ -11,4 +11,3 @@ environs==9.5.0
 dagster==1.1.13
 dagit==1.1.13
 jsonpath-ng==1.5.3
-grpcio==1.47.0
