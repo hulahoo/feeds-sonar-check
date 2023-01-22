@@ -12,8 +12,8 @@ install_requires = [
     ('alembic', '1.8.1'),
     ('prometheus-client', '0.15.0'),
     ('environs', '9.5.0'),
-    ('dagster', '1.1.13'),
-    ('dagit', '1.1.13'),
+    ('dagster', '1.1.6'),
+    ('dagit', '1.1.6'),
     ('jsonpath-ng', '1.5.3'),
 ]
 
@@ -28,7 +28,7 @@ setup(
     description=CI_PROJECT_TITLE,
     url=CI_PROJECT_URL,
     install_requires=[">=".join(req) for req in install_requires],
-    python_requires=">=3.11.1",
+    python_requires=">=3.9.1",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     entry_points={
