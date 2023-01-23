@@ -191,7 +191,7 @@ def preview():
                 break
 
     return app.response_class(
-        response=result,
+        response='\n'.join(result),
         status=200,
         mimetype='text/plain',
         content_type=CONTENT_TYPE_LATEST
