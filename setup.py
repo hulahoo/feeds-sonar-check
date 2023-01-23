@@ -28,7 +28,7 @@ setup(
     description=CI_PROJECT_TITLE,
     url=CI_PROJECT_URL,
     install_requires=[">=".join(req) for req in install_requires],
-    python_requires=">=3.9.1",
+    python_requires=">=3.10.3",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     entry_points={
