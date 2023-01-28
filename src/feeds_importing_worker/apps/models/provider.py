@@ -1,6 +1,8 @@
 from typing import Optional
 from datetime import datetime
 
+from sqlalchemy import update
+
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
 from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship
@@ -68,7 +70,6 @@ class IndicatorProvider(BaseProvider):
             feed_relation = self.session.query(IndicatorFeedRelationship).filter(
                 IndicatorFeedRelationship.indicator_id == indicator_id).first()
             feed_relation.deleted_at = now
-            self.session.add(feed_relation)
         self.session.commit()
 
 
