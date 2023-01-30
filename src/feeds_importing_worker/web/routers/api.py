@@ -91,13 +91,13 @@ def _download_feeds(feed: Feed, parent_process: Process):
         parent_id=parent_process.id
     )
 
-    process_provider.add(process)
+    # process_provider.add(process)
 
     feed_service.update_raw_data(feed)
 
     process.status = JobStatus.SUCCESS
     process.finished_at = datetime.now()
-    process_provider.update(process)
+    # process_provider.update(process)
 
 
 def _update_feeds(parent_process: Process):
@@ -112,7 +112,7 @@ def _update_feeds(parent_process: Process):
             parent_id=parent_process.id
         )
 
-        process_provider.add(process)
+        # process_provider.add(process)
 
         _download_feeds(feed, parent_process)
 
@@ -121,7 +121,7 @@ def _update_feeds(parent_process: Process):
         process.status = JobStatus.SUCCESS
         process.result = result
         process.finished_at = datetime.now()
-        process_provider.update(process)
+        # process_provider.update(process)
 
 
 def _remove_old_relatioins(parent_process: Process):
@@ -133,13 +133,13 @@ def _remove_old_relatioins(parent_process: Process):
         parent_id=parent_process.id
     )
 
-    process_provider.add(process)
+    # process_provider.add(process)
 
     feed_service.soft_delete_indicators_without_feeds()
 
     process.status = JobStatus.SUCCESS
     process.finished_at = datetime.now()
-    process_provider.update(process)
+    # process_provider.update(process)
 
 
 @app.route('/api/force-update', methods=["GET"])
@@ -151,14 +151,14 @@ def force_update():
         status=JobStatus.IN_PROGRESS
     )
 
-    process_provider.add(process)
+    # process_provider.add(process)
 
     _update_feeds(process)
     _remove_old_relatioins(process)
 
     process.status = JobStatus.SUCCESS
     process.finished_at = datetime.now()
-    process_provider.update(process)
+    # process_provider.update(process)
 
     return app.response_class(
         response={"status": "FINISHED"},
