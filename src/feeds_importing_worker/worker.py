@@ -51,7 +51,7 @@ def feeds_repository():
             ScheduleDefinition(
                 job=update_feed(feed),
                 cron_schedule=feed.polling_frequency,
-                default_status=DefaultScheduleStatus.RUNNING
+                default_status=DefaultScheduleStatus.STOPPED
             )
         )
 
