@@ -1,3 +1,4 @@
 include:
   - project: 'rshbintech/integrations/ckpr/ci-cd/base'
     file: '/flow/ci-cdp/svc/python.yml'
+    ref: 4.1.2
