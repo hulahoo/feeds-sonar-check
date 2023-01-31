@@ -19,4 +19,8 @@ databases:
     port: 5432
     name: db
 
+env:
+  DAGSTER_HOME: ~/dagster_home
+  DAGIT_ENABLED: false
+
 strategyType: Recreate
