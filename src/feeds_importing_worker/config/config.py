@@ -1,3 +1,5 @@
+import os
+
 from dataclasses import dataclass
 from environs import Env
 
@@ -36,7 +38,7 @@ def load_config(path: str = None) -> Config:
             port=env.str('APP_POSTGRESQL_PORT')
         ),
         app=APPConfig(
-            dagster_home=env.str('DAGSTER_HOME'),
+            dagster_home=os.path.expanduser(env.str('DAGSTER_HOME')),
             dagit_enabled=env.bool('DAGIT_ENABLED'),
         )
     )

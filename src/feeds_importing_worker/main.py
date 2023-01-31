@@ -10,11 +10,14 @@ from feeds_importing_worker.web.routers.api import execute as flask_app
 from feeds_importing_worker.apps.models.base import metadata
 
 
-os.environ['DAGSTER_HOME'] = settings.app.dagster_home
-path = os.path.dirname(os.path.abspath(__file__))
+if not os.path.exists(settings.app.dagster_home):
+    os.makedirs(settings.app.dagster_home)
 
 metadata.drop_all(tables=[metadata.tables['_jobs']])
 metadata.create_all(tables=[metadata.tables['_jobs']])
+
+os.environ['DAGSTER_HOME'] = settings.app.dagster_home
+path = os.path.dirname(os.path.abspath(__file__))
 
 
 def start_dagit():
