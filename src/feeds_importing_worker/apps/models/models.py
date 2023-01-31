@@ -11,7 +11,7 @@ from feeds_importing_worker.apps.models.abstract import IDBase, TimestampBase
 class FeedRawData(IDBase, TimestampBase):
     __tablename__ = "feeds_raw_data"
 
-    feed_id = Column(BigInteger, ForeignKey('feeds.id'), nullable=True)
+    feed_id = Column(BigInteger, ForeignKey('feeds.id'), nullable=True)  # NOSONAR
 
     filename = Column(String(128))
     content = Column(BYTEA)
@@ -120,3 +120,12 @@ class Process(IDBase):
     finished_at = Column(DateTime)
 
     children = relationship('Process')
+
+
+class Job(IDBase):
+    __tablename__ = "_jobs"
+
+    feed_id = Column(BigInteger, ForeignKey('feeds.id'), nullable=False, unique=True)
+    status = Column(String(16))
+
+    feed = relationship(Feed)

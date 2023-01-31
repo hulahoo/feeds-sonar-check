@@ -18,7 +18,7 @@ install_requires = [
 ]
 
 CI_PROJECT_NAME = os.environ.get("CI_PROJECT_NAME", "feeds-importing-worker")
-ARTIFACT_VERSION = os.environ.get("ARTIFACT_VERSION", "local")
+ARTIFACT_VERSION = os.environ.get("ARTIFACT_VERSION", "0.1")
 CI_PROJECT_TITLE = os.environ.get("CI_PROJECT_TITLE", "Воркер импорта фидов")
 CI_PROJECT_URL = os.environ.get("CI_PROJECT_URL", "https://gitlab.in.axept.com/rshb/feeds-importing-worker")
 

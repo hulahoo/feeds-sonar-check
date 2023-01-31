@@ -1,16 +1,14 @@
 from flask import Flask, request
 from flask_wtf.csrf import CSRFProtect
-from datetime import datetime
 from requests.exceptions import RequestException
 
 from feeds_importing_worker.config.log_conf import logger
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
-from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider
-from feeds_importing_worker.apps.constants import SERVICE_NAME
-from feeds_importing_worker.apps.enums import JobStatus
+from feeds_importing_worker.apps.models.provider import FeedProvider, JobProvider
 from feeds_importing_worker.apps.services import FeedService
-from feeds_importing_worker.apps.models.models import Process, Feed
+from feeds_importing_worker.apps.models.models import Feed, Job
+from feeds_importing_worker.apps.enums import WorkerJobStatus
 
 
 app = Flask(__name__)
@@ -21,7 +19,7 @@ mimetype = 'application/json'
 
 feed_service = FeedService()
 feed_provider = FeedProvider()
-process_provider = ProcessProvider()
+job_provider = JobProvider()
 
 
 def execute():
@@ -82,88 +80,25 @@ def api_routes():
         }
 
 
-def _download_feeds(feed: Feed, parent_process: Process):
-    process = Process(
-        service_name=SERVICE_NAME,
-        title=f'download - {feed.provider} - {feed.title}',
-        started_at=datetime.now(),
-        status=JobStatus.IN_PROGRESS,
-        parent_id=parent_process.id
-    )
-
-    # process_provider.add(process)
-
-    feed_service.update_raw_data(feed)
-
-    process.status = JobStatus.SUCCESS
-    process.finished_at = datetime.now()
-    # process_provider.update(process)
-
-
-def _update_feeds(parent_process: Process):
+@app.route('/api/force-update', methods=["GET"])
+def force_update():
     feeds = feed_provider.get_all()
 
     for feed in feeds:
-        process = Process(
-            service_name=SERVICE_NAME,
-            title=f'parse - {feed.provider} - {feed.title}',
-            started_at=datetime.now(),
-            status=JobStatus.IN_PROGRESS,
-            parent_id=parent_process.id
-        )
+        job_provider.add(Job(
+            feed_id=feed.id,
+            status=WorkerJobStatus.PENDING
+        ))
 
-        # process_provider.add(process)
+    result = []
 
-        _download_feeds(feed, parent_process)
-
-        result = feed_service.parse(feed)
-
-        process.status = JobStatus.SUCCESS
-        process.result = result
-        process.finished_at = datetime.now()
-        # process_provider.update(process)
-
-
-def _remove_old_relatioins(parent_process: Process):
-    process = Process(
-        service_name=SERVICE_NAME,
-        title='remove old relations',
-        started_at=datetime.now(),
-        status=JobStatus.IN_PROGRESS,
-        parent_id=parent_process.id
-    )
-
-    # process_provider.add(process)
-
-    feed_service.soft_delete_indicators_without_feeds()
-
-    process.status = JobStatus.SUCCESS
-    process.finished_at = datetime.now()
-    # process_provider.update(process)
-
-
-@app.route('/api/force-update', methods=["GET"])
-def force_update():
-    process = Process(
-        service_name=SERVICE_NAME,
-        title='feeds parsing',
-        started_at=datetime.now(),
-        status=JobStatus.IN_PROGRESS
-    )
-
-    # process_provider.add(process)
-
-    _update_feeds(process)
-    _remove_old_relatioins(process)
-
-    process.status = JobStatus.SUCCESS
-    process.finished_at = datetime.now()
-    # process_provider.update(process)
+    for job in job_provider.get_all():
+        result.append(f'{job.status} - {job.feed.provider}: {job.feed.title}')
 
     return app.response_class(
-        response={"status": "FINISHED"},
+        response='\n'.join(result),
         status=200,
-        mimetype=mimetype
+        content_type=CONTENT_TYPE_LATEST
     )
 
 

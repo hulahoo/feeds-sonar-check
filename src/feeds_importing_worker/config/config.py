@@ -12,8 +12,15 @@ class DBConfig:
 
 
 @dataclass
+class APPConfig:
+    dagster_home: str
+    dagit_enabled: bool
+
+
+@dataclass
 class Config:
     db: DBConfig
+    app: APPConfig
 
 
 def load_config(path: str = None) -> Config:
@@ -27,6 +34,10 @@ def load_config(path: str = None) -> Config:
             password=env.str('APP_POSTGRESQL_PASSWORD'),
             host=env.str('APP_POSTGRESQL_HOST'),
             port=env.str('APP_POSTGRESQL_PORT')
+        ),
+        app=APPConfig(
+            dagster_home=env.str('DAGSTER_HOME'),
+            dagit_enabled=env.bool('DAGIT_ENABLED'),
         )
     )
 

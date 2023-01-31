@@ -1,11 +1,13 @@
 from typing import Optional
 from datetime import datetime
 
-from sqlalchemy import update
+from sqlalchemy.exc import IntegrityError
 
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
-from feeds_importing_worker.apps.models.models import Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship
+from feeds_importing_worker.apps.models.models import (
+    Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship, Job
+)
 
 
 class BaseProvider:
@@ -59,8 +61,15 @@ class IndicatorProvider(BaseProvider):
 
     def get_id_set_for_feeds_current_indicators(self, feed: Feed):
         logger.debug(f"feed id - {feed.id}")
-        query = self.session.query(IndicatorFeedRelationship.indicator_id).filter(
-            IndicatorFeedRelationship.feed_id == feed.id).filter(IndicatorFeedRelationship.deleted_at == None)
+
+        query = self.session.query(
+            IndicatorFeedRelationship.indicator_id
+        ).filter(
+            IndicatorFeedRelationship.feed_id == feed.id
+        ).filter(
+            IndicatorFeedRelationship.deleted_at == None
+        )
+
         return [str(item.indicator_id) for item in query.all()]
 
     def soft_delete_relations(self, indicators_id):
@@ -82,3 +91,29 @@ class ProcessProvider(BaseProvider):
         logger.info(f"Process to update: {process.id}")
         self.session.add(process)
         self.session.commit()
+
+
+class JobProvider(BaseProvider):
+    def get_all(self, status: str = None):
+        query = self.session.query(Job)
+
+        if status:
+            query = query.filter(Job.status == status)
+
+        return query.all()
+
+    def add(self, job: Job):
+        self.session.add(job)
+
+        try:
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+
+    def update(self, job: Job):
+        self.session.add(job)
+        self.session.commit()
+
+    def delete(self, status: str):
+        self.session.query(Job).filter(Job.status == status).delete()
+
