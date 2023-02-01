@@ -150,7 +150,6 @@ class FeedService:
             if indicator.id in old_indicators_id_list:
                 old_indicators_id_list.remove(indicator.id)
         else:
-            logger.debug(f'Create new indicator')
             indicator = new_indicator
             indicator.feeds = [self.indicator_provider.session.merge(feed)]
 
