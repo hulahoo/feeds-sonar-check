@@ -4,6 +4,7 @@ from dagster import (
     repository,
     ScheduleDefinition,
     DefaultScheduleStatus,
+    DagsterInstance
 )
 from datetime import datetime
 
@@ -60,7 +61,7 @@ def check_jobs():
         job.status = WorkerJobStatus.RUNNING
         job_provider.update(job)
 
-        update_feed(job.feed).execute_in_process()
+        update_feed(job.feed).execute_in_process(instance=DagsterInstance.get())
 
         job.status = WorkerJobStatus.FINISHED
         job_provider.update(job)
