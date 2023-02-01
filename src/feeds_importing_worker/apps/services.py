@@ -159,7 +159,7 @@ class FeedService:
 
         result['indicators-processed'] += 1
 
-        if count % 5000 == 0:
+        if count % 400 == 0:
             try:
                 self.indicator_provider.session.commit()
             except Exception as e:
