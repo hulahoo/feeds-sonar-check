@@ -16,6 +16,9 @@ APP_POSTGRESQL_USER=user
 APP_POSTGRESQL_PASSWORD=password
 APP_POSTGRESQL_HOST=localhost
 APP_POSTGRESQL_PORT=5432
+
+DAGSTER_HOME=~/dagster_home
+DAGIT_ENABLED=false
 ```
 
 
@@ -49,6 +52,11 @@ python3 -m pip install .
 ```bash
 feeds-importing-worker
 ```
+
+Для отладки можно запустить dagit (dagster web UI) установив env DAGIT_ENABLED=true.
+В этом случае dagit запуститься на 3000 порту.
+
+Для настроек dagster используется файл /config/dagster.yaml
 
 ### Требования к инфраструктуре
 1. Минимальная версия Kafka:
