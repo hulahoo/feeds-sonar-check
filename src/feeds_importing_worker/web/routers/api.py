@@ -117,8 +117,8 @@ def preview():
         logger.warning(f'Unable to get feed preview: {e}')
 
         return app.response_class(
-            response=f'Bad Request. URL={request.args.get("url")}',
-            status=400,
+            response=f'Preview unavailable',
+            status=200,
             content_type=CONTENT_TYPE_LATEST
         )
     else:
