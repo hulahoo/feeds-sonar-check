@@ -114,8 +114,13 @@ def preview():
             auth_pass=request.args.get('auth_pass', None),
         ))
     except RequestException as e:
-        result = 'preview unavailable'
         logger.warning(f'Unable to get feed preview: {e}')
+
+        return app.response_class(
+            response=f'Bad Request. URL={request.args.get("url")}',
+            status=400,
+            content_type=CONTENT_TYPE_LATEST
+        )
     else:
         result = []
 
