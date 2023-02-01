@@ -35,5 +35,9 @@ setup(
         'console_scripts': [
             CI_PROJECT_NAME + " = " + "feeds_importing_worker.main:execute",
         ]
-    }
+    },
+    include_package_data=True,
+    package_data={
+        "feeds_importing_worker.config": ["dagster.yaml"],
+    },
 )

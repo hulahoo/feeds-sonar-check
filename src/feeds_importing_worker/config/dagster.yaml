@@ -1,0 +1,10 @@
+sensors:
+  use_threads: false
+  num_workers: 1
+
+schedules:
+  use_threads: false
+  num_workers: 1
+
+code_servers:
+  local_startup_timeout: 3600

@@ -2,6 +2,8 @@
 
 import subprocess
 import os
+import shutil
+
 from threading import Thread
 
 from feeds_importing_worker.config.config import settings
@@ -12,6 +14,8 @@ from feeds_importing_worker.apps.models.base import metadata
 
 if not os.path.exists(settings.app.dagster_home):
     os.makedirs(settings.app.dagster_home)
+
+shutil.copy(settings.app.config_path, settings.app.dagster_home)
 
 metadata.drop_all(tables=[metadata.tables['_jobs']])
 metadata.create_all(tables=[metadata.tables['_jobs']])

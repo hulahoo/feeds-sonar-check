@@ -17,6 +17,7 @@ class DBConfig:
 class APPConfig:
     dagster_home: str
     dagit_enabled: bool
+    config_path: str
 
 
 @dataclass
@@ -40,6 +41,7 @@ def load_config(path: str = None) -> Config:
         app=APPConfig(
             dagster_home=os.path.expanduser(env.str('DAGSTER_HOME')),
             dagit_enabled=env.bool('DAGIT_ENABLED'),
+            config_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dagster.yaml')
         )
     )
 
