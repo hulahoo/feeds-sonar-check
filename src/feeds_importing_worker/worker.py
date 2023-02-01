@@ -35,7 +35,9 @@ def update_feed(feed: Feed):
 
         feed_service.update_raw_data(feed)
         result = feed_service.parse(feed)
-        feed_service.soft_delete_indicators_without_feeds()
+
+        # feed_service.soft_delete_indicators_without_feeds() # TODO: need optimization
+
         process.status = JobStatus.SUCCESS
         process.result = result
         process.finished_at = datetime.now()
