@@ -23,4 +23,9 @@ env:
   DAGSTER_HOME: ~/dagster_home
   DAGIT_ENABLED: false
 
+links:
+  - targetProtocol: HTTP
+    targetInformationSystemId: threat-intelligence
+    targetServiceId: test-data-service
+
 strategyType: Recreate
