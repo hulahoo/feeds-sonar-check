@@ -27,5 +27,7 @@ links:
   - targetProtocol: HTTP
     targetInformationSystemId: threat-intelligence
     targetServiceId: test-data-service
+    endpointMapping:
+      - endpointAlias: /api
 
 strategyType: Recreate
