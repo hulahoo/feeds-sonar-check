@@ -8,12 +8,8 @@ class FeedStatus(str, Enum):
 
 
 class JobStatus(str, Enum):
-    SUCCESS = 'success'
+    PENDING = 'pending'
+    DONE = 'done'
     FAILED = 'failed'
     IN_PROGRESS = 'in-progress'
 
-
-class WorkerJobStatus:
-    PENDING = 'pending'
-    RUNNING = 'running'
-    FINISHED = 'finished'

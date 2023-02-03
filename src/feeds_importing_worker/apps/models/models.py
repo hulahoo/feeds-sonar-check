@@ -114,6 +114,8 @@ class Process(IDBase):
     parent_id = Column(BigInteger, ForeignKey('processes.id'), nullable=True)
     service_name = Column(String(64))
     title = Column(String(128))
+    name = Column(String(128))
+    request = Column(JSONB)
     result = Column(JSONB)
     status = Column(String(32))
     started_at = Column(DateTime)

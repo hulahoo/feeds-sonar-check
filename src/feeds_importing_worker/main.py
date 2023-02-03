@@ -9,7 +9,8 @@ from threading import Thread
 from feeds_importing_worker.config.config import settings
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.web.routers.api import execute as flask_app
-from feeds_importing_worker.apps.models.base import metadata
+from feeds_importing_worker.apps.models.provider import ProcessProvider
+from feeds_importing_worker.apps.enums import JobStatus
 
 
 if not os.path.exists(settings.app.dagster_home):
@@ -17,8 +18,7 @@ if not os.path.exists(settings.app.dagster_home):
 
 shutil.copy(settings.app.config_path, settings.app.dagster_home)
 
-metadata.drop_all(tables=[metadata.tables['_jobs']])
-metadata.create_all(tables=[metadata.tables['_jobs']])
+ProcessProvider().delete(status=JobStatus.IN_PROGRESS)
 
 os.environ['DAGSTER_HOME'] = settings.app.dagster_home
 path = os.path.dirname(os.path.abspath(__file__))

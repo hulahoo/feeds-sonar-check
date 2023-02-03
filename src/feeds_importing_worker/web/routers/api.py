@@ -5,10 +5,11 @@ from requests.exceptions import RequestException
 from feeds_importing_worker.config.log_conf import logger
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
-from feeds_importing_worker.apps.models.provider import FeedProvider, JobProvider
+from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider
 from feeds_importing_worker.apps.services import FeedService
-from feeds_importing_worker.apps.models.models import Feed, Job
-from feeds_importing_worker.apps.enums import WorkerJobStatus
+from feeds_importing_worker.apps.models.models import Feed, Process
+from feeds_importing_worker.apps.enums import JobStatus
+from feeds_importing_worker.apps.constants import SERVICE_NAME
 
 
 app = Flask(__name__)
@@ -19,7 +20,7 @@ mimetype = 'application/json'
 
 feed_service = FeedService()
 feed_provider = FeedProvider()
-job_provider = JobProvider()
+process_provider = ProcessProvider()
 
 
 def execute():
@@ -85,15 +86,19 @@ def force_update():
     feeds = feed_provider.get_all()
 
     for feed in feeds:
-        job_provider.add(Job(
-            feed_id=feed.id,
-            status=WorkerJobStatus.PENDING
+        process_provider.add(Process(
+            service_name=SERVICE_NAME,
+            status=JobStatus.PENDING,
+            name=f'import {feed.provider}: {feed.title}',
+            request={
+                'feed-id': feed.id
+            }
         ))
 
     result = []
 
-    for job in job_provider.get_all():
-        result.append(f'{job.status} - {job.feed.provider}: {job.feed.title}')
+    for process in process_provider.get_all_by_statuses([JobStatus.PENDING, JobStatus.IN_PROGRESS]):
+        result.append(f'{process.status}: {process.name}')
 
     return app.response_class(
         response='\n'.join(result),

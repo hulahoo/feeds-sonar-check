@@ -1,13 +1,13 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-
-from sqlalchemy.exc import IntegrityError
 
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
 from feeds_importing_worker.apps.models.models import (
     Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship, Job
 )
+from feeds_importing_worker.apps.enums import JobStatus
+from feeds_importing_worker.apps.constants import SERVICE_NAME
 
 
 class BaseProvider:
@@ -19,6 +19,11 @@ class FeedProvider(BaseProvider):
     def update(self, feed: Feed):
         self.session.add(self.session.merge(feed))
         self.session.commit()
+
+    def get_by_id(self, id_: int):
+        query = self.session.query(Feed).filter(Feed.id == id_)
+
+        return query.one_or_none()
 
     def get_all(self, is_active=True):
         query = self.session.query(Feed).filter(Feed.is_active == is_active)
@@ -84,36 +89,37 @@ class IndicatorProvider(BaseProvider):
 
 class ProcessProvider(BaseProvider):
     def add(self, process: Process):
-        self.session.add(process)
-        self.session.commit()
+        current_process = self.session.query(Process).filter(
+            Process.service_name == SERVICE_NAME
+        ).filter(
+            Process.name == process.name
+        ).filter(
+            Process.status.in_([JobStatus.IN_PROGRESS, JobStatus.PENDING])
+        ).count()
+
+        if not current_process:
+            self.session.add(process)
+            self.session.commit()
 
     def update(self, process: Process):
         logger.info(f"Process to update: {process.id}")
         self.session.add(process)
         self.session.commit()
 
+    def delete(self, status: str):
+        self.session.query(Process).filter(
+            Process.service_name == SERVICE_NAME
+        ).filter(
+            Process.status == status
+        ).delete()
 
-class JobProvider(BaseProvider):
-    def get_all(self, status: str = None):
-        query = self.session.query(Job)
-
-        if status:
-            query = query.filter(Job.status == status)
-
-        return query.all()
-
-    def add(self, job: Job):
-        self.session.add(job)
-
-        try:
-            self.session.commit()
-        except IntegrityError:
-            self.session.rollback()
-
-    def update(self, job: Job):
-        self.session.add(job)
         self.session.commit()
 
-    def delete(self, status: str):
-        self.session.query(Job).filter(Job.status == status).delete()
+    def get_all_by_statuses(self, statuses: List[str]):
+        query = self.session.query(Process).filter(
+            Process.service_name == SERVICE_NAME
+        ).filter(
+            Process.status.in_(statuses)
+        )
 
+        return query.all()
