@@ -97,6 +97,14 @@ def force_update():
             }
         ))
 
+    return app.response_class(
+        response={"status": "Started"},
+        status=200,
+        content_type=mimetype
+    )
+
+@app.route('/api/force-update/statistics', methods=["GET"])
+def force_update_statistics():
     result = []
 
     for process in process_provider.get_all_by_statuses([JobStatus.PENDING, JobStatus.IN_PROGRESS]):
@@ -111,7 +119,6 @@ def force_update():
         status=200,
         content_type=mimetype
     )
-
 
 @app.route('/api/preview', methods=["GET"])
 def preview():
