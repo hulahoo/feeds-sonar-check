@@ -98,12 +98,16 @@ def force_update():
     result = []
 
     for process in process_provider.get_all_by_statuses([JobStatus.PENDING, JobStatus.IN_PROGRESS]):
-        result.append(f'{process.status}: {process.name}')
+        result.append({
+            "process_status": process.status,
+            "process_name": process.name,
+            "feed-id": process.request
+        })
 
     return app.response_class(
-        response='\n'.join(result),
+        response=result,
         status=200,
-        content_type=CONTENT_TYPE_LATEST
+        content_type=mimetype
     )
 
 
