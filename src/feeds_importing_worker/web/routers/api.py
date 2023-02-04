@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, request
 from flask_wtf.csrf import CSRFProtect
 from requests.exceptions import RequestException
@@ -105,7 +107,7 @@ def force_update():
         })
 
     return app.response_class(
-        response=result,
+        response=json.dumps(result),
         status=200,
         content_type=mimetype
     )
