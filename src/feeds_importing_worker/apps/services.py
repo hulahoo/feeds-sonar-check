@@ -71,9 +71,7 @@ class FeedService:
             raise e
         else:
             self.feed_provider.clear_old_data(feed, now)
-            self.feed_provider.session.commit()
-        finally:
-            self.feed_provider.session.close()
+
 
     def parse(self, feed: Feed):
         logger.info(f'Start parsing feed {feed.provider} - {feed.title}...')
