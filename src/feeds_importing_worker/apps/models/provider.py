@@ -19,7 +19,9 @@ class FeedProvider(BaseProvider):
     def update(self, feed: Feed):
         with SyncPostgresDriver().session() as session:
             session.add(session.merge(feed))
+            session.flush()
             session.commit()
+            session.refresh(feed)
 
     def get_by_id(self, id_: int):
         with SyncPostgresDriver().session() as session:
@@ -56,6 +58,8 @@ class IndicatorProvider(BaseProvider):
     def add(self, indicator: Indicator):
         with SyncPostgresDriver().session() as session:
             session.add(indicator)
+            session.flush()
+            session.commit()
 
     def get_by_value_type(self, value: str, type: str) -> Optional[Indicator]:
         with SyncPostgresDriver().session() as session:
@@ -111,13 +115,16 @@ class ProcessProvider(BaseProvider):
 
             if not current_process:
                 session.add(process)
+                session.flush()
                 session.commit()
 
     def update(self, process: Process):
         with SyncPostgresDriver().session() as session:
             logger.info(f"Process to update: {process.id}")
             session.add(process)
+            session.flush()
             session.commit()
+            session.refresh(process)
 
     def delete(self, status: str):
         with SyncPostgresDriver().session() as session:

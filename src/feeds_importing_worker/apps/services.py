@@ -152,7 +152,6 @@ class FeedService:
             indicator.feeds = [self.indicator_provider.session.merge(feed)]
 
         self.indicator_provider.add(indicator)
-        self.indicator_provider.session.flush()
 
         result['indicators-processed'] += 1
 
