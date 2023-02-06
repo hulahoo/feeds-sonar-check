@@ -21,7 +21,6 @@ class FeedProvider(BaseProvider):
             session.add(session.merge(feed))
             session.flush()
             session.commit()
-            session.refresh(feed)
 
     def get_by_id(self, id_: int):
         with SyncPostgresDriver().session() as session:
