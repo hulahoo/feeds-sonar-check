@@ -13,15 +13,19 @@ from feeds_importing_worker.apps.models.provider import ProcessProvider
 from feeds_importing_worker.apps.enums import JobStatus
 
 
-if not os.path.exists(settings.app.dagster_home):
+path = os.path.dirname(os.path.abspath(__file__))
+os.environ['DAGSTER_HOME'] = settings.app.dagster_home
+
+
+def init_dagster_config():
+    if os.path.exists(settings.app.dagster_home):
+        shutil.rmtree(settings.app.dagster_home)
+
     os.makedirs(settings.app.dagster_home)
 
-shutil.copy(settings.app.config_path, settings.app.dagster_home)
+    shutil.copy(settings.app.config_path, settings.app.dagster_home)
 
-ProcessProvider().delete(status=JobStatus.IN_PROGRESS)
-
-os.environ['DAGSTER_HOME'] = settings.app.dagster_home
-path = os.path.dirname(os.path.abspath(__file__))
+    ProcessProvider().delete(status=JobStatus.IN_PROGRESS)
 
 
 def start_dagit():
@@ -40,6 +44,8 @@ def execute() -> None:
     2. Run Flask thread;
     3. Run Worker thread.
     """
+    init_dagster_config()
+
     worker_thread: Thread = Thread(target=start_dagit)
     flask_thread: Thread = Thread(target=flask_app)
     daemon_thread: Thread = Thread(target=start_dagster)

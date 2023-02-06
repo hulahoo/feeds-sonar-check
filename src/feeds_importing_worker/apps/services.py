@@ -71,7 +71,10 @@ class FeedService:
             raise e
         else:
             self.feed_provider.clear_old_data(feed, now)
-
+            self.feed_provider.session.commit()
+        finally:
+            self.feed_provider.session.close()
+            self.feed_raw_data_provider.session.close()
 
     def parse(self, feed: Feed):
         logger.info(f'Start parsing feed {feed.provider} - {feed.title}...')
@@ -85,7 +88,9 @@ class FeedService:
         parser: IParser = get_parser(feed.format)
 
         logger.debug('Start to get indicators')
+
         new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)
+
         old_indicators_id_list = self.indicator_provider.get_id_set_for_feeds_current_indicators(feed)
         len_old = 0
 
@@ -98,9 +103,12 @@ class FeedService:
             'feed': f'{feed.provider} - {feed.title}',
             'indicators-processed': 0
         }
+
         logger.debug(f"result = {result}")
+
         for count, new_indicator in enumerate(new_indicators):
             self.process_indicator(count, new_indicator, feed, now, old_indicators_id_list, result)
+
             if (
                     feed.is_truncating
                     and feed.max_records_count
@@ -127,6 +135,7 @@ class FeedService:
             self.indicator_provider.session.close()
 
             self.feed_provider.update(feed)
+            self.feed_provider.session.close()
 
         logger.debug(f"result = {result}")
         logger.debug(f"Len of old_indicators_id_list - {len_old}, new len after work- {len(old_indicators_id_list)}")
@@ -152,6 +161,7 @@ class FeedService:
             indicator.feeds = [self.indicator_provider.session.merge(feed)]
 
         self.indicator_provider.add(indicator)
+        self.indicator_provider.session.flush()
 
         result['indicators-processed'] += 1
 
@@ -160,10 +170,14 @@ class FeedService:
                 self.indicator_provider.session.commit()
             except Exception as e:
                 self.indicator_provider.session.rollback()
-                logger.debug('Error occurred during in process commit data')
+
+                logger.debug(f'Error occurred during in process commit data \n {e}')
+
                 feed.status = FeedStatus.FAILED
                 self.feed_provider.update(feed)
-                raise e
+            finally:
+                self.feed_provider.session.close()
+                self.indicator_provider.session.close()
 
     def soft_delete_indicators_without_feeds(self):
         logger.info(f'Start soft deleting for indicators without feeds')
@@ -190,8 +204,7 @@ class FeedService:
                 self.indicator_provider.session.commit()
             except Exception as e:
                 self.indicator_provider.session.rollback()
-                logger.debug('Error occurred during commit data')
-                raise e
+                logger.debug(f'Error occurred during commit data \n {e}')
             finally:
                 self.indicator_provider.session.close()
                 logger.debug('All fine')

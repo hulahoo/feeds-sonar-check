@@ -102,6 +102,11 @@ class IndicatorProvider(BaseProvider):
 
 
 class ProcessProvider(BaseProvider):
+    def get_by_id(self, id_: int):
+        query = self.session.query(Process).filter(Process.id == id_)
+
+        return query.one()
+
     def add(self, process: Process):
         with SyncPostgresDriver().session() as session:
             current_process = session.query(Process).filter(
