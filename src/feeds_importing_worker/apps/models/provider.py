@@ -17,6 +17,7 @@ class BaseProvider:
 
 class FeedProvider(BaseProvider):
     def update(self, feed: Feed):
+        # FIX
         self.session.add(self.session.merge(feed))
         self.session.commit()
 

@@ -7,6 +7,7 @@ from xml.etree import ElementTree
 from jsonpath_ng import parse
 from typing import Iterator
 
+from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.importer.utils import ParsingRules
 from feeds_importing_worker.apps.models.models import Indicator
 
@@ -19,16 +20,20 @@ class IParser(ABC):
 
 class PlainTextParser(IParser):
     def get_indicators(self, data: str, parsing_rules: json) -> Iterator[Indicator]:
+        logger.info(f"Parsing rules: {parsing_rules}")
         parsing_rules = ParsingRules(parsing_rules)
 
         for value in data:
+            logger.info(f"Feed value: {value}")
             if not value or value[0] == '#':
+                logger.info("No feed value mathched")
                 continue
 
             yield Indicator(
                 ioc_type=parsing_rules['ioc-type'].value,
                 value=value,
             )
+        logger.info("Getting feed indicators finished")
 
 
 class CSVParser(IParser):

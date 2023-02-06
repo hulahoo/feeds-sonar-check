@@ -23,7 +23,7 @@ class ParsingRule:
 
 class ParsingRules:
     def __init__(self, parsing_rules: json):
-        self.parsing_rules = parsing_rules
+        self.parsing_rules = parsing_rules[0] if isinstance(parsing_rules, list) else parsing_rules
 
     def __getitem__(self, item) -> ParsingRule:
         return ParsingRule(self.parsing_rules[item])

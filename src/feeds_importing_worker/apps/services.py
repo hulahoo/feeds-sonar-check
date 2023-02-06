@@ -93,6 +93,7 @@ class FeedService:
 
         old_indicators_id_list = self.indicator_provider.get_id_set_for_feeds_current_indicators(feed)
         len_old = 0
+        logger.info(f"Old indicators: {old_indicators_id_list}")
 
         if old_indicators_id_list:
             len_old = len(old_indicators_id_list)
@@ -107,6 +108,7 @@ class FeedService:
         logger.debug(f"result = {result}")
 
         for count, new_indicator in enumerate(new_indicators):
+            logger.info(f"Count: {count} for indicator: {new_indicator}")
             self.process_indicator(count, new_indicator, feed, now, old_indicators_id_list, result)
 
             if (
@@ -119,6 +121,7 @@ class FeedService:
 
         try:
             if old_indicators_id_list:
+                logger.info("Soft deleting old indicators")
                 self.indicator_provider.soft_delete_relations(old_indicators_id_list)
 
             self.indicator_provider.session.commit()
@@ -132,6 +135,7 @@ class FeedService:
             logger.debug('All fine')
             feed.status = FeedStatus.NORMAL
         finally:
+            logger.info("Closing session")
             self.indicator_provider.session.close()
 
             self.feed_provider.update(feed)
@@ -147,6 +151,7 @@ class FeedService:
             logger.debug(f'count - {count}')
             logger.debug(f'Indicator info: value -{new_indicator.value}, ioc_type - {new_indicator.ioc_type}')
         indicator = self.indicator_provider.get_by_value_type(new_indicator.value, new_indicator.ioc_type)
+        logger.info(f"Retrieved existed indicator: {indicator} with value: {new_indicator.value} and type: {new_indicator.ioc_type}")
 
         if indicator:
             if feed not in indicator.feeds:
@@ -155,9 +160,13 @@ class FeedService:
                 indicator.is_archived = False
                 indicator.updated_at = now
             if indicator.id in old_indicators_id_list:
+                logger.info("Retrieved indicator found in old indicator list. Remove it from old ind. list")
                 old_indicators_id_list.remove(indicator.id)
         else:
+            logger.info("Creating new indicator")
             indicator = new_indicator
+            indicator.updated_at = now
+
             indicator.feeds = [self.indicator_provider.session.merge(feed)]
 
         self.indicator_provider.add(indicator)
@@ -167,6 +176,7 @@ class FeedService:
 
         if count % 400 == 0:
             try:
+                logger.info("Max batch size reached. Commiting indicators")
                 self.indicator_provider.session.commit()
             except Exception as e:
                 self.indicator_provider.session.rollback()
