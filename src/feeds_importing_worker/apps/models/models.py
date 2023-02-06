@@ -123,11 +123,3 @@ class Process(IDBase):
 
     children = relationship('Process')
 
-
-class Job(IDBase):
-    __tablename__ = "_jobs"
-
-    feed_id = Column(BigInteger, ForeignKey('feeds.id'), nullable=False, unique=True)
-    status = Column(String(16))
-
-    feed = relationship(Feed)

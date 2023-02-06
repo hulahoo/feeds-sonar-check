@@ -1,10 +1,9 @@
 from abc import abstractmethod, ABC
-from contextlib import contextmanager
 
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session, Session
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from feeds_importing_worker.config.config import settings
 
@@ -26,16 +25,8 @@ class Database(ABC):
     def _init_session_factory(self):
         ...
 
-    @contextmanager
     def session(self):
-        session: Session = self._session_factory()
-        try:
-            yield session
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.close()
+        return self._session_factory()
 
 
 class SyncPostgresDriver(Database):
