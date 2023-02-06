@@ -24,7 +24,7 @@ process_provider = ProcessProvider()
 
 
 def update_feed(feed: Feed):
-    @op(name=feed.provider + '_op')
+    @op(name=f'{feed.id}_{feed.provider}_op')
     def op_fn():
         try:
             feed_service.update_raw_data(feed)
@@ -32,7 +32,7 @@ def update_feed(feed: Feed):
         except Exception as e:
             logger.warning(f'Unable to process feed: {feed.id} {feed.provider} - {feed.title}\n{e}')
 
-    @job(name=feed.provider)
+    @job(name=f'{feed.id}_{feed.provider}')
     def process_fn():
         op_fn()
 
