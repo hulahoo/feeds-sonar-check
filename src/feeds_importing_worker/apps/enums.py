@@ -12,4 +12,5 @@ class JobStatus(str, Enum):
     DONE = 'done'
     FAILED = 'failed'
     IN_PROGRESS = 'in-progress'
+    CANCELLED = 'cancelled'
 
