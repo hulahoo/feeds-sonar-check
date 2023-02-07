@@ -62,7 +62,7 @@ def process_fn():
     op_fn()
 
 
-@sensor(job=process_fn, default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=10)
+@sensor(job=process_fn, default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=60)
 def check_jobs():
     if process_provider.get_all_by_statuses([JobStatus.IN_PROGRESS]):
         return
