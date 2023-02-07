@@ -107,17 +107,22 @@ class FeedService:
 
         logger.debug(f"result = {result}")
 
-        for count, new_indicator in enumerate(new_indicators):
-            logger.info(f"Count: {count} for indicator: {new_indicator}")
-            self.process_indicator(count, new_indicator, feed, now, old_indicators_id_list, result)
+        try:
+            for count, new_indicator in enumerate(new_indicators):
+                logger.info(f"Count: {count} for indicator: {new_indicator}")
+                self.process_indicator(count, new_indicator, feed, now, old_indicators_id_list, result)
 
-            if (
-                    feed.is_truncating
-                    and feed.max_records_count
-                    and result['indicators-processed'] >= feed.max_records_count
-            ):
-                logger.debug('Proceeding indicators broken')
-                break
+                if (
+                        feed.is_truncating
+                        and feed.max_records_count
+                        and result['indicators-processed'] >= feed.max_records_count
+                ):
+                    logger.debug(f'Feed is truncated to {feed.max_records_count}')
+                    break
+        except Exception as e:
+            logger.warning(f'Unable to parse content for feed {feed.id} \n {e}')
+            result['status'] = FeedStatus.FAILED
+            return result
 
         try:
             if old_indicators_id_list:
