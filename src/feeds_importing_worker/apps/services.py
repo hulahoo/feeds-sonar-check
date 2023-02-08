@@ -153,7 +153,7 @@ class FeedService:
 
         self.indicator_provider.add(indicator)
 
-        if count % 400 == 0:
+        if count % 100 == 0:
             try:
                 logger.info("Max batch size reached. Commiting indicators")
                 self.indicator_provider.commit()
