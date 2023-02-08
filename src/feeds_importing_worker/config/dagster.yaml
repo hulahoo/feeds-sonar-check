@@ -8,9 +8,3 @@ schedules:
 
 code_servers:
   local_startup_timeout: 3600
-
-run_coordinator:
-  module: dagster.core.run_coordinator
-  class: QueuedRunCoordinator
-  config:
-    max_concurrent_runs: 1

@@ -18,10 +18,8 @@ os.environ['DAGSTER_HOME'] = settings.app.dagster_home
 
 
 def init_dagster_config():
-    if os.path.exists(settings.app.dagster_home):
-        shutil.rmtree(settings.app.dagster_home)
-
-    os.makedirs(settings.app.dagster_home)
+    if not os.path.exists(settings.app.dagster_home):
+        os.makedirs(settings.app.dagster_home)
 
     shutil.copy(settings.app.config_path, settings.app.dagster_home)
 

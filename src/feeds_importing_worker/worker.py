@@ -78,9 +78,6 @@ def check_jobs():
 
             continue
 
-        process_provider.session.close()
-        feed_provider.session.close()
-
         yield RunRequest(
             run_key=f'FEED: {feed.id} {datetime.now()}',
             run_config={

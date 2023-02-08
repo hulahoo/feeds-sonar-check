@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from sqlalchemy import event
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA, UUID
 from sqlalchemy import (
@@ -42,7 +45,7 @@ class Feed(IDBase, TimestampBase):
     max_records_count = Column(DECIMAL)
     updated_at = Column(DateTime)
 
-    data = relationship(FeedRawData, order_by=FeedRawData.chunk)
+    data = relationship(FeedRawData, order_by=FeedRawData.chunk, lazy='joined')
 
     @property
     def raw_content(self):
@@ -103,7 +106,8 @@ class Indicator(TimestampBase):
         Feed,
         backref='indicators',
         secondary='indicator_feed_relationships',
-        primaryjoin=(IndicatorFeedRelationship.indicator_id == id and not IndicatorFeedRelationship.deleted_at)
+        primaryjoin=(IndicatorFeedRelationship.indicator_id == id and not IndicatorFeedRelationship.deleted_at),
+        lazy='joined'
     )
 
     UniqueConstraint(value, ioc_type, name='indicators_unique_value_type')
@@ -123,3 +127,12 @@ class Process(IDBase):
 
     children = relationship('Process')
 
+
+@event.listens_for(Feed, 'before_update')
+def receive_before_update(mapper, connection, target: Feed):
+    target.updated_at = datetime.now()
+
+
+@event.listens_for(Indicator, 'before_update')
+def receive_before_update(mapper, connection, target: Indicator):
+    target.updated_at = datetime.now()
