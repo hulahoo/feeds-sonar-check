@@ -1,16 +1,14 @@
 from dagster import (
     job,
     op,
-    sensor,
     repository,
     ScheduleDefinition,
     DefaultScheduleStatus,
-    RunRequest,
-    DefaultSensorStatus,
+    DagsterInstance
 )
 from datetime import datetime
 
-from feeds_importing_worker.apps.models.models import Feed, Process
+from feeds_importing_worker.apps.models.models import Feed
 from feeds_importing_worker.apps.services import FeedService
 from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider
 from feeds_importing_worker.apps.enums import JobStatus
@@ -26,11 +24,8 @@ process_provider = ProcessProvider()
 def update_feed(feed: Feed):
     @op(name=f'{feed.id}_{feed.provider}_op')
     def op_fn():
-        try:
-            feed_service.update_raw_data(feed)
-            feed_service.parse(feed)
-        except Exception as e:
-            logger.warning(f'Unable to process feed: {feed.id} {feed.provider} - {feed.title}\n{e}')
+        feed_service.update_raw_data(feed)
+        feed_service.parse(feed)
 
     @job(name=f'{feed.id}_{feed.provider}')
     def process_fn():
@@ -39,30 +34,7 @@ def update_feed(feed: Feed):
     return process_fn
 
 
-@op(config_schema={'feed_id': int, 'process_id': int})
-def op_fn(context):
-    process = process_provider.get_by_id(context.op_config['process_id'])
-
-    process.started_at = datetime.now()
-    process.status = JobStatus.IN_PROGRESS
-    process_provider.update(process)
-
-    feed: Feed = feed_provider.get_by_id(context.op_config['feed_id'])
-
-    feed_service.update_raw_data(feed)
-    feed_service.parse(feed)
-
-    process.finished_at = datetime.now()
-    process.status = JobStatus.DONE
-    process_provider.update(process)
-
-
-@job
-def process_fn():
-    op_fn()
-
-
-@sensor(job=process_fn, default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=60)
+@job(name='check_jobs')
 def check_jobs():
     if process_provider.get_all_by_statuses([JobStatus.IN_PROGRESS]):
         return
@@ -78,12 +50,20 @@ def check_jobs():
 
             continue
 
-        yield RunRequest(
-            run_key=f'FEED: {feed.id} {datetime.now()}',
-            run_config={
-                'ops': {'op_fn': {'config': {'feed_id': feed.id, 'process_id': process.id}}}
-            },
-        )
+        process.started_at = datetime.now()
+        process.status = JobStatus.IN_PROGRESS
+        process_provider.update(process)
+
+        try:
+            update_feed(feed).execute_in_process(instance=DagsterInstance.get())
+        except Exception as e:
+            logger.warning(f'Unable to create job for feed {feed.id}: {e}')
+            process.status = JobStatus.FAILED
+            process_provider.update(process)
+        else:
+            process.finished_at = datetime.now()
+            process.status = JobStatus.DONE
+            process_provider.update(process)
 
         break
 
@@ -107,6 +87,12 @@ def feeds_repository():
         else:
             processes.append(job)
 
-    processes.append(check_jobs)
+    processes.append(
+        ScheduleDefinition(
+            job=check_jobs,
+            cron_schedule='* * * * *',
+            default_status=DefaultScheduleStatus.RUNNING
+        )
+    )
 
     return processes
