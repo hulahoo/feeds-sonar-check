@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import event
+from sqlalchemy import event, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, BYTEA, UUID
 from sqlalchemy import (
@@ -100,7 +100,7 @@ class Indicator(TimestampBase):
     first_detected_at = Column(DateTime)
     last_detected_at = Column(DateTime)
     created_by = Column(BigInteger)
-    updated_at = Column(DateTime)
+    updated_at = Column(DateTime, default=func.now())
 
     feeds = relationship(
         Feed,
