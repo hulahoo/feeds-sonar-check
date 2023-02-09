@@ -153,6 +153,8 @@ class FeedService:
             indicator = new_indicator
 
             indicator.feeds = [feed]
+            indicator.feeds_weight = feed.weight
+            indicator.weight = feed.weight
 
         self.indicator_provider.add(indicator)
 
