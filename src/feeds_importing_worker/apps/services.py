@@ -17,7 +17,6 @@ from feeds_importing_worker.apps.models.provider import FeedProvider, FeedRawDat
 class FeedService:
     def __init__(self):
         self.indicator_provider = IndicatorProvider()
-        self.feed_raw_data_provider = FeedRawDataProvider()
         self.feed_provider = FeedProvider()
 
     def _download_raw_data(self, feed: Feed):

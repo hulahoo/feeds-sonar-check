@@ -7,4 +7,4 @@ schedules:
   num_workers: 1
 
 code_servers:
-  local_startup_timeout: 3600
+  local_startup_timeout: 14400
