@@ -24,8 +24,8 @@ process_provider = ProcessProvider()
 def update_feed(feed: Feed):
     @op(name=f'{feed.id}_{feed.provider}_op')
     def op_fn():
-        feed_service.update_raw_data(feed)
-        feed_service.parse(feed)
+        feed_service.update_raw_data(feed.id)
+        feed_service.parse(feed.id)
 
     @job(name=f'{feed.id}_{feed.provider}')
     def process_fn():

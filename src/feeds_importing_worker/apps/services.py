@@ -40,8 +40,10 @@ class FeedService:
 
             return feed.raw_content
 
-    def update_raw_data(self, feed: Feed):
-        logger.info(f'Start download feed {feed.provider} - {feed.title}...')
+    def update_raw_data(self, feed_id: int):
+        feed = self.feed_provider.get_by_id(feed_id)
+
+        logger.info(f'Start download feed {feed.id} {feed.provider} - {feed.title}...')
 
         now = datetime.now()
         chunk_num = 1
@@ -58,19 +60,21 @@ class FeedService:
 
                 chunk_num += 1
 
-                self.feed_raw_data_provider.add(feed_raw_data)
+                feed.data.append(feed_raw_data)
         except RequestException as e:
             logger.error(f'Failed to update feed data: {e}')
             return
 
         try:
-            self.feed_raw_data_provider.commit()
+            self.feed_provider.update(feed)
         except Exception as e:
             logger.debug(f'Error occurred during commit data \n {e}')
         else:
             self.feed_provider.clear_old_data(feed, now)
 
-    def parse(self, feed: Feed):
+    def parse(self, feed_id: int):
+        feed = self.feed_provider.get_by_id(feed_id)
+
         logger.info(f'Start parsing feed {feed.provider} - {feed.title}...')
         feed.status = FeedStatus.LOADING
 
