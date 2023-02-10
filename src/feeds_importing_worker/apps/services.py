@@ -101,13 +101,20 @@ class FeedService:
 
                 indicators_processed += 1
 
+                if count % 100 == 0:
+                    logger.info("Max batch size reached. Commiting indicators")
+                    self.indicator_provider.commit()
+
                 if (
-                        feed.is_truncating
-                        and feed.max_records_count
-                        and indicators_processed >= feed.max_records_count
+                    feed.is_truncating
+                    and feed.max_records_count
+                    and indicators_processed >= feed.max_records_count
                 ):
                     logger.debug(f'Feed is truncated to {feed.max_records_count}')
                     break
+
+            self.indicator_provider.commit()
+
         except Exception as e:
             logger.warning(f'Unable to parse content for feed {feed.id} \n {e}')
             feed.status = FeedStatus.FAILED
@@ -157,16 +164,6 @@ class FeedService:
             indicator.weight = feed.weight
 
         self.indicator_provider.add(indicator)
-
-        if count % 100 == 0:
-            try:
-                logger.info("Max batch size reached. Commiting indicators")
-                self.indicator_provider.commit()
-            except Exception as e:
-                logger.debug(f'Error occurred during in process commit data \n {e}')
-
-                feed.status = FeedStatus.FAILED
-                self.feed_provider.update(feed)
 
     def soft_delete_indicators_without_feeds(self):
         logger.info(f'Start soft deleting for indicators without feeds')
