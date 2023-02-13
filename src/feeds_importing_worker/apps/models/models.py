@@ -113,6 +113,15 @@ class Indicator(TimestampBase):
     UniqueConstraint(value, ioc_type, name='indicators_unique_value_type')
 
 
+class IndicatorActivity(IDBase, TimestampBase):
+    __tablename__ = "indicator_activities"
+
+    indicator_id = Column(UUID(as_uuid=True))
+    activity_type = Column(String(32))
+    details = Column(JSONB)
+    created_by = Column(BigInteger, nullable=True)
+
+
 class Process(IDBase):
     __tablename__ = "processes"
     parent_id = Column(BigInteger, ForeignKey('processes.id'), nullable=True)
@@ -136,3 +145,13 @@ def receive_before_update(mapper, connection, target: Feed):
 @event.listens_for(Indicator, 'before_update')
 def receive_before_update(mapper, connection, target: Indicator):
     target.updated_at = datetime.now()
+
+
+@event.listens_for(Indicator, 'before_insert')
+def receive_before_insert(mapper, connection, target: Indicator):
+    IndicatorActivity(
+        indicator_id=target.id,
+        activity_type="Indicator created",
+        created_by=None,
+        details={}
+    )

@@ -4,7 +4,7 @@ from datetime import datetime
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
 from feeds_importing_worker.apps.models.models import (
-    Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship
+    Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship, IndicatorActivity
 )
 from feeds_importing_worker.apps.enums import JobStatus
 from feeds_importing_worker.apps.constants import SERVICE_NAME
@@ -24,6 +24,15 @@ class BaseProvider:
                 session.commit()
         finally:
             self.data = []
+
+
+class IndicatorActivityProvider(BaseProvider):
+    def create(self, data: dict):
+        with self.session() as session:
+            activity = IndicatorActivity(**data)
+            session.add(activity)
+            session.flush()
+            session.commit()
 
 
 class FeedProvider(BaseProvider):

@@ -11,13 +11,14 @@ from feeds_importing_worker.apps.importer import get_parser, IParser
 from feeds_importing_worker.apps.constants import CHUNK_SIZE
 from feeds_importing_worker.apps.enums import FeedStatus
 from feeds_importing_worker.apps.models.models import Feed, FeedRawData
-from feeds_importing_worker.apps.models.provider import FeedProvider, FeedRawDataProvider, IndicatorProvider
+from feeds_importing_worker.apps.models.provider import FeedProvider, IndicatorProvider, IndicatorActivityProvider
 
 
 class FeedService:
     def __init__(self):
         self.indicator_provider = IndicatorProvider()
         self.feed_provider = FeedProvider()
+        self.indicator_activity_provider =  IndicatorActivityProvider()
 
     def _download_raw_data(self, feed: Feed):
         auth = None
@@ -67,7 +68,7 @@ class FeedService:
         try:
             self.feed_provider.update(feed)
         except Exception as e:
-            logger.debug(f'Error occurred during commit data \n {e}')
+            logger.error(f'Error occurred during commit data \n {e}')
         else:
             self.feed_provider.clear_old_data(feed, now)
 
@@ -116,7 +117,7 @@ class FeedService:
             self.indicator_provider.commit()
 
         except Exception as e:
-            logger.warning(f'Unable to parse content for feed {feed.id} \n {e}')
+            logger.error(f'Unable to parse content for feed {feed.id} \n {e}')
             feed.status = FeedStatus.FAILED
             self.feed_provider.update(feed)
 
@@ -128,7 +129,7 @@ class FeedService:
                 self.indicator_provider.soft_delete_relations(old_indicators_id_list)
 
         except Exception as e:
-            logger.debug(f'Error occurred during commit data \n {e}')
+            logger.error(f'Error occurred during commit data \n {e}')
             feed.status = FeedStatus.FAILED
         else:
             logger.debug('All fine')
@@ -152,6 +153,14 @@ class FeedService:
                 logger.debug(f'Append feed to indicator')
                 indicator.feeds.append(feed)
                 indicator.is_archived = False
+                self.indicator_activity_provider.create(
+                    {
+                        "indicator_id": indicator.id,
+                        "activity_type": "Added new feeds",
+                        "created_by": None,
+                        "details": {"feeds": feed}
+                    }
+                )
             if indicator.id in old_indicators_id_list:
                 logger.info("Retrieved indicator found in old indicator list. Remove it from old ind. list")
                 old_indicators_id_list.remove(indicator.id)
@@ -162,8 +171,26 @@ class FeedService:
             indicator.feeds = [feed]
             indicator.feeds_weight = feed.weight
             indicator.weight = feed.weight
+            self.indicator_activity_provider.create(
+                {
+                    "indicator_id": indicator.id,
+                    "activity_type": "Added feeds",
+                    "created_by": None,
+                    "details": {"feed": feed}
+                }
+            )
 
         self.indicator_provider.add(indicator)
+
+        if count % 100 == 0:
+            try:
+                logger.info("Max batch size reached. Commiting indicators")
+                self.indicator_provider.commit()
+            except Exception as e:
+                logger.error(f'Error occurred during in process commit data \n {e}')
+
+                feed.status = FeedStatus.FAILED
+                self.feed_provider.update(feed)
 
     def soft_delete_indicators_without_feeds(self):
         logger.info(f'Start soft deleting for indicators without feeds')
@@ -184,7 +211,7 @@ class FeedService:
             try:
                 self.indicator_provider.commit()
             except Exception as e:
-                logger.debug(f'Error occurred during commit data \n {e}')
+                logger.error(f'Error occurred during commit data \n {e}')
 
         logger.debug(f'Result: {result}')
         return result
