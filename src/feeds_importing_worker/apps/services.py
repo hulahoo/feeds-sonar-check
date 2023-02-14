@@ -10,15 +10,16 @@ from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.importer import get_parser, IParser
 from feeds_importing_worker.apps.constants import CHUNK_SIZE
 from feeds_importing_worker.apps.enums import FeedStatus
-from feeds_importing_worker.apps.models.models import Feed, FeedRawData
-from feeds_importing_worker.apps.models.provider import FeedProvider, IndicatorProvider, IndicatorActivityProvider
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData, AuditLog
+from feeds_importing_worker.apps.models.provider import FeedProvider, IndicatorProvider, IndicatorActivityProvider, AuditLogProvider
 
 
 class FeedService:
     def __init__(self):
         self.indicator_provider = IndicatorProvider()
         self.feed_provider = FeedProvider()
-        self.indicator_activity_provider =  IndicatorActivityProvider()
+        self.indicator_activity_provider = IndicatorActivityProvider()
+        self.audit_log_provider = AuditLogProvider()
 
     def _download_raw_data(self, feed: Feed):
         auth = None
@@ -105,6 +106,7 @@ class FeedService:
                 if count % 100 == 0:
                     logger.info("Max batch size reached. Commiting indicators")
                     self.indicator_provider.commit()
+                    self.audit_log_provider.commit()
 
                 if (
                     feed.is_truncating
@@ -115,6 +117,7 @@ class FeedService:
                     break
 
             self.indicator_provider.commit()
+            self.audit_log_provider.commit()
 
         except Exception as e:
             logger.error(f'Unable to parse content for feed {feed.id} \n {e}')
@@ -182,15 +185,11 @@ class FeedService:
 
         self.indicator_provider.add(indicator)
 
-        if count % 100 == 0:
-            try:
-                logger.info("Max batch size reached. Commiting indicators")
-                self.indicator_provider.commit()
-            except Exception as e:
-                logger.error(f'Error occurred during in process commit data \n {e}')
-
-                feed.status = FeedStatus.FAILED
-                self.feed_provider.update(feed)
+        self.audit_log_provider.add(AuditLog(
+            event_type='add',
+            object_type='indicator',
+            object_name=indicator.value,
+        ))
 
     def soft_delete_indicators_without_feeds(self):
         logger.info(f'Start soft deleting for indicators without feeds')

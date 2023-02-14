@@ -137,6 +137,19 @@ class Process(IDBase):
     children = relationship('Process')
 
 
+class AuditLog(IDBase, TimestampBase):
+    __tablename__ = "audit_logs"
+    service_name = Column(String(128))
+    user_id = Column(BigInteger)
+    event_type = Column(String(128))
+    object_type = Column(String(128))
+    object_name = Column(String(128))
+    description = Column(String(256))
+    prev_value = Column(JSONB)
+    new_value = Column(JSONB)
+    context = Column(JSONB)
+
+
 @event.listens_for(Feed, 'before_update')
 def receive_before_update(mapper, connection, target: Feed):
     target.updated_at = datetime.now()

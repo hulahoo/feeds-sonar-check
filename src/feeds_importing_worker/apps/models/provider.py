@@ -4,7 +4,7 @@ from datetime import datetime
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
 from feeds_importing_worker.apps.models.models import (
-    Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship, IndicatorActivity
+    Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship, IndicatorActivity, AuditLog
 )
 from feeds_importing_worker.apps.enums import JobStatus
 from feeds_importing_worker.apps.constants import SERVICE_NAME
@@ -171,3 +171,10 @@ class ProcessProvider(BaseProvider):
             )
 
             return query.all()
+
+
+class AuditLogProvider(BaseProvider):
+    def add(self, audit_log: AuditLog):
+        audit_log.service_name = SERVICE_NAME
+
+        self.data.append(audit_log)
