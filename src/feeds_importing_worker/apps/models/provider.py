@@ -27,12 +27,8 @@ class BaseProvider:
 
 
 class IndicatorActivityProvider(BaseProvider):
-    def create(self, data: dict):
-        with self.session() as session:
-            activity = IndicatorActivity(**data)
-            session.add(activity)
-            session.flush()
-            session.commit()
+    def add(self, indicator_activity: IndicatorActivity):
+        self.data.append(indicator_activity)
 
 
 class FeedProvider(BaseProvider):

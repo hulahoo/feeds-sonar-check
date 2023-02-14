@@ -10,7 +10,7 @@ from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.importer import get_parser, IParser
 from feeds_importing_worker.apps.constants import CHUNK_SIZE
 from feeds_importing_worker.apps.enums import FeedStatus
-from feeds_importing_worker.apps.models.models import Feed, FeedRawData, AuditLog
+from feeds_importing_worker.apps.models.models import Feed, FeedRawData, AuditLog, IndicatorActivity
 from feeds_importing_worker.apps.models.provider import FeedProvider, IndicatorProvider, IndicatorActivityProvider, AuditLogProvider
 
 
@@ -107,6 +107,7 @@ class FeedService:
                     logger.info("Max batch size reached. Commiting indicators")
                     self.indicator_provider.commit()
                     self.audit_log_provider.commit()
+                    self.indicator_activity_provider.commit()
 
                 if (
                     feed.is_truncating
@@ -118,6 +119,7 @@ class FeedService:
 
             self.indicator_provider.commit()
             self.audit_log_provider.commit()
+            self.indicator_activity_provider.commit()
 
         except Exception as e:
             logger.error(f'Unable to parse content for feed {feed.id} \n {e}')
@@ -146,6 +148,8 @@ class FeedService:
             logger.debug(f'Indicator info: value -{new_indicator.value}, ioc_type - {new_indicator.ioc_type}')
 
         indicator = self.indicator_provider.get_by_value_type(new_indicator.value, new_indicator.ioc_type)
+        activity_type = None
+        audit_type = None
 
         if indicator:
             logger.info(
@@ -156,14 +160,9 @@ class FeedService:
                 logger.debug(f'Append feed to indicator')
                 indicator.feeds.append(feed)
                 indicator.is_archived = False
-                self.indicator_activity_provider.create(
-                    {
-                        "indicator_id": indicator.id,
-                        "activity_type": "Added new feeds",
-                        "created_by": None,
-                        "details": {"feeds": feed}
-                    }
-                )
+                activity_type = 'Add new feeds'
+                audit_type = 'update'
+
             if indicator.id in old_indicators_id_list:
                 logger.info("Retrieved indicator found in old indicator list. Remove it from old ind. list")
                 old_indicators_id_list.remove(indicator.id)
@@ -174,22 +173,24 @@ class FeedService:
             indicator.feeds = [feed]
             indicator.feeds_weight = feed.weight
             indicator.weight = feed.weight
-            self.indicator_activity_provider.create(
-                {
-                    "indicator_id": indicator.id,
-                    "activity_type": "Added feeds",
-                    "created_by": None,
-                    "details": {"feed": feed}
-                }
-            )
+            activity_type = 'Create'
+            audit_type = 'create'
 
         self.indicator_provider.add(indicator)
 
-        self.audit_log_provider.add(AuditLog(
-            event_type='add',
-            object_type='indicator',
-            object_name=indicator.value,
-        ))
+        if activity_type:
+            self.indicator_activity_provider.add(IndicatorActivity(
+                indicator_id=indicator.id,
+                activity_type=activity_type,
+                details={'feeds': [feed.id] for feed in indicator.feeds}
+            ))
+
+        if audit_type:
+            self.audit_log_provider.add(AuditLog(
+                event_type=audit_type,
+                object_type='indicator',
+                object_name=indicator.value,
+            ))
 
     def soft_delete_indicators_without_feeds(self):
         logger.info(f'Start soft deleting for indicators without feeds')
