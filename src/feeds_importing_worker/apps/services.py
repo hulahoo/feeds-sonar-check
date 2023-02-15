@@ -88,6 +88,7 @@ class FeedService:
         logger.debug('Start to get indicators')
 
         new_indicators = parser.get_indicators(feed.raw_content, feed.parsing_rules)
+        logger.info(f"New indicators: {new_indicators}")
 
         old_indicators_id_list = self.indicator_provider.get_id_set_for_feeds_current_indicators(feed)
 
