@@ -98,7 +98,7 @@ class FeedService:
         indicators_processed = 0
 
         try:
-            for count, new_indicator in enumerate(new_indicators):
+            for count, new_indicator in enumerate(new_indicators, start=1):
                 self.process_indicator(count, new_indicator, feed, old_indicators_id_list)
 
                 indicators_processed += 1
