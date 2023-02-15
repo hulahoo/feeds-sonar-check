@@ -103,7 +103,7 @@ class FeedService:
 
                 indicators_processed += 1
 
-                if count % 100 == 0:
+                if count % 50 == 0:
                     logger.info("Max batch size reached. Commiting indicators")
                     self.indicator_provider.commit()
                     self.audit_log_provider.commit()
@@ -143,7 +143,7 @@ class FeedService:
             self.feed_provider.update(feed)
 
     def process_indicator(self, count, new_indicator, feed, old_indicators_id_list):
-        if count % 200 == 0:
+        if count % 50 == 0:
             logger.debug(f'count - {count}')
             logger.debug(f'Indicator info: value -{new_indicator.value}, ioc_type - {new_indicator.ioc_type}')
 
