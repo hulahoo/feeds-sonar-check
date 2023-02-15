@@ -105,9 +105,13 @@ class FeedService:
 
                 if count % 10 == 0:
                     logger.info("Max batch size reached. Commiting indicators")
-                    self.indicator_provider.commit()
-                    self.audit_log_provider.commit()
-                    self.indicator_activity_provider.commit()
+                    try:
+                        self.indicator_provider.commit()
+                        self.audit_log_provider.commit()
+                        self.indicator_activity_provider.commit()
+                    except Exception as e:
+                        logger.error(f'Unable to commit batch for feed {feed.id} \n {e}')
+                        continue
 
                 if (
                     feed.is_truncating
