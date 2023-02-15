@@ -44,6 +44,9 @@ class Feed(IDBase, TimestampBase):
     is_truncating = Column(Boolean, default=True)
     max_records_count = Column(DECIMAL)
     updated_at = Column(DateTime)
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime)
+    deleted_by = Column(BigInteger)
 
     data = relationship(FeedRawData, order_by=FeedRawData.chunk, lazy='joined')
 
