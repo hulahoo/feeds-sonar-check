@@ -24,6 +24,7 @@ def init_dagster_config():
     shutil.copy(settings.app.config_path, settings.app.dagster_home)
 
     ProcessProvider().delete(status=JobStatus.IN_PROGRESS)
+    ProcessProvider().delete(status=JobStatus.PENDING)
 
 
 def start_dagit():

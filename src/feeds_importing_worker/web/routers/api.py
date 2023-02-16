@@ -1,5 +1,7 @@
 import json
 
+from datetime import datetime
+
 from flask import Flask, request
 from flask_wtf.csrf import CSRFProtect
 from requests.exceptions import RequestException
@@ -85,6 +87,9 @@ def api_routes():
 
 @app.route('/api/force-update', methods=["GET"])
 def force_update():
+    delay = request.args.get('delay', default=0)
+    now = datetime.now()
+
     feeds = feed_provider.get_all()
 
     for feed in feeds:
@@ -93,7 +98,9 @@ def force_update():
             status=JobStatus.PENDING,
             name=f'import {feed.provider}: {feed.title}',
             request={
-                'feed-id': feed.id
+                'feed-id': feed.id,
+                'created_at': now.isoformat(),
+                'delay': delay
             }
         ))
 

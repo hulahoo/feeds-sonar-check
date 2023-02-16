@@ -39,9 +39,15 @@ def check_jobs():
     if process_provider.get_all_by_statuses([JobStatus.IN_PROGRESS]):
         return
 
+    now = datetime.now()
+
     pending_processes = process_provider.get_all_by_statuses([JobStatus.PENDING])
 
     for process in pending_processes:
+        if (now - datetime.fromisoformat(process.request['created_at'])).seconds / 60 < int(process.request['delay']):
+            logger.info(f'Skip job for feed - {process.request["feed-id"]}, waiting for delay {process.request["delay"]} min')
+            continue
+
         feed = feed_provider.get_by_id(process.request['feed-id'])
 
         if not feed:
@@ -49,6 +55,8 @@ def check_jobs():
             process_provider.update(process)
 
             continue
+
+        logger.info(f'Start job for feed - {process.request["feed-id"]}, after delay {process.request["delay"]} min')
 
         process.started_at = datetime.now()
         process.status = JobStatus.IN_PROGRESS
