@@ -1,3 +1,4 @@
+import os
 import json
 
 from datetime import datetime
@@ -17,6 +18,14 @@ from feeds_importing_worker.apps.constants import SERVICE_NAME
 
 
 app = Flask(__name__)
+
+SECRET_KEY = os.urandom(32)
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config['WTF_CSRF_ENABLED'] = True
+
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 mimetype = 'application/json'
 
