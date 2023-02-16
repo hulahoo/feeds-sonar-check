@@ -17,8 +17,6 @@ from feeds_importing_worker.apps.constants import SERVICE_NAME
 
 
 app = Flask(__name__)
-csrf = CSRFProtect()
-csrf.init_app(app)
 
 mimetype = 'application/json'
 
@@ -85,9 +83,14 @@ def api_routes():
         }
 
 
-@app.route('/api/force-update', methods=["GET"])
+@app.route('/api/force-update', methods=["POST"])
 def force_update():
-    delay = request.args.get('delay', default=0)
+    try:
+        data = request.get_json()
+        delay = data['delay']
+    except Exception:
+        delay = 0
+
     now = datetime.now()
 
     feeds = feed_provider.get_all()
