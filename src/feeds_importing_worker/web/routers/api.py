@@ -159,7 +159,9 @@ def preview():
 
 @app.route('/api/current-frequency', methods=["POST"])
 def post_current_frequency():
-    data = request.get_json()
+    import json
+    logger.info(f"Incoming data to update: {request.get_json()}")
+    data = json.loads(request.get_json())
     delay = int(data['delay'])
 
     platform_setting = platform_setting_provider.get()
@@ -172,7 +174,7 @@ def post_current_frequency():
     return app.response_class(
         response=json.dumps({'delay': platform_setting.value['delay']}),
         status=200,
-        content_type=CONTENT_TYPE_LATEST
+        content_type=mimetype
     )
 
 
@@ -183,5 +185,5 @@ def get_current_frequency():
     return app.response_class(
         response=json.dumps({'delay': platform_setting.value['delay']}),
         status=200,
-        content_type=CONTENT_TYPE_LATEST
+        content_type=mimetype
     )
