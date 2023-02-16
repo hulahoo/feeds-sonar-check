@@ -9,7 +9,7 @@ from threading import Thread
 from feeds_importing_worker.config.config import settings
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.web.routers.api import execute as flask_app
-from feeds_importing_worker.apps.models.provider import ProcessProvider
+from feeds_importing_worker.apps.models.provider import ProcessProvider, PlatformSettingProvider
 from feeds_importing_worker.apps.enums import JobStatus
 
 
@@ -25,6 +25,8 @@ def init_dagster_config():
 
     ProcessProvider().delete(status=JobStatus.IN_PROGRESS)
     ProcessProvider().delete(status=JobStatus.PENDING)
+
+    PlatformSettingProvider().update(PlatformSettingProvider().get())
 
 
 def start_dagit():

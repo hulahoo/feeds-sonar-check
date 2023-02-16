@@ -153,6 +153,13 @@ class AuditLog(IDBase, TimestampBase):
     context = Column(JSONB)
 
 
+class PlatformSetting(IDBase, TimestampBase):
+    __tablename__ = "platform_settings"
+    key = Column(String(128))
+    value = Column(JSONB)
+    updated_at = Column(DateTime)
+
+
 @event.listens_for(Feed, 'before_update')
 def receive_before_update(mapper, connection, target: Feed):
     target.updated_at = datetime.now()

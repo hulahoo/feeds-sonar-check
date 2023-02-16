@@ -10,7 +10,7 @@ from datetime import datetime
 
 from feeds_importing_worker.apps.models.models import Feed
 from feeds_importing_worker.apps.services import FeedService
-from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider
+from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider, Process, PlatformSettingProvider
 from feeds_importing_worker.apps.enums import JobStatus
 
 from feeds_importing_worker.config.log_conf import logger
@@ -19,6 +19,7 @@ from feeds_importing_worker.config.log_conf import logger
 feed_service = FeedService()
 feed_provider = FeedProvider()
 process_provider = ProcessProvider()
+platform_setting_provider = PlatformSettingProvider()
 
 
 def update_feed(feed: Feed):
@@ -34,20 +35,42 @@ def update_feed(feed: Feed):
     return process_fn
 
 
-@job(name='check_jobs')
-def check_jobs():
-    if process_provider.get_all_by_statuses([JobStatus.IN_PROGRESS]):
+@op
+def add_jobs():
+    platform_setting = platform_setting_provider.get()
+
+    minutes_from_last_check = (datetime.now() - datetime.fromisoformat(platform_setting.value['last_check'])).seconds / 60
+
+    if minutes_from_last_check < int(platform_setting.value['delay']):
+        logger.info('Skip schedule jobs')
         return
 
-    now = datetime.now()
+    logger.info('Add schedule jobs')
+    platform_setting.value['last_check'] = datetime.now().isoformat()
+    platform_setting_provider.update(platform_setting)
+
+    feeds = feed_provider.get_all()
+
+    for feed in feeds:
+        process_provider.add(Process(
+            status=JobStatus.PENDING,
+            name=f'import {feed.provider}: {feed.title}',
+            request={
+                'feed-id': feed.id,
+            }
+        ))
+
+
+@job(name='check_jobs')
+def check_jobs():
+    add_jobs()
+
+    if process_provider.get_all_by_statuses([JobStatus.IN_PROGRESS]):
+        return
 
     pending_processes = process_provider.get_all_by_statuses([JobStatus.PENDING])
 
     for process in pending_processes:
-        if (now - datetime.fromisoformat(process.request['created_at'])).seconds / 60 < int(process.request['delay']):
-            logger.info(f'Skip job for feed - {process.request["feed-id"]}, waiting for delay {process.request["delay"]} min')
-            continue
-
         feed = feed_provider.get_by_id(process.request['feed-id'])
 
         if not feed:
@@ -55,8 +78,6 @@ def check_jobs():
             process_provider.update(process)
 
             continue
-
-        logger.info(f'Start job for feed - {process.request["feed-id"]}, after delay {process.request["delay"]} min')
 
         process.started_at = datetime.now()
         process.status = JobStatus.IN_PROGRESS

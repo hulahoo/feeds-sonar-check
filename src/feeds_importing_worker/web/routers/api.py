@@ -9,7 +9,7 @@ from requests.exceptions import RequestException
 from feeds_importing_worker.config.log_conf import logger
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
-from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider
+from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider, PlatformSettingProvider
 from feeds_importing_worker.apps.services import FeedService
 from feeds_importing_worker.apps.models.models import Feed, Process
 from feeds_importing_worker.apps.enums import JobStatus
@@ -23,6 +23,7 @@ mimetype = 'application/json'
 feed_service = FeedService()
 feed_provider = FeedProvider()
 process_provider = ProcessProvider()
+platform_setting_provider = PlatformSettingProvider()
 
 
 def execute():
@@ -83,16 +84,8 @@ def api_routes():
         }
 
 
-@app.route('/api/force-update', methods=["POST"])
+@app.route('/api/force-update', methods=["GET"])
 def force_update():
-    try:
-        data = request.get_json()
-        delay = data['delay']
-    except Exception:
-        delay = 0
-
-    now = datetime.now()
-
     feeds = feed_provider.get_all()
 
     for feed in feeds:
@@ -102,8 +95,6 @@ def force_update():
             name=f'import {feed.provider}: {feed.title}',
             request={
                 'feed-id': feed.id,
-                'created_at': now.isoformat(),
-                'delay': delay
             }
         ))
 
@@ -162,5 +153,35 @@ def preview():
         response='\n'.join(result),
         status=200,
         mimetype='text/plain',
+        content_type=CONTENT_TYPE_LATEST
+    )
+
+
+@app.route('/api/current-frequency', methods=["POST"])
+def post_current_frequency():
+    data = request.get_json()
+    delay = int(data['delay'])
+
+    platform_setting = platform_setting_provider.get()
+
+    platform_setting.value['delay'] = delay
+    platform_setting.value['last_check'] = datetime.now().isoformat()
+
+    platform_setting_provider.update(platform_setting)
+
+    return app.response_class(
+        response=json.dumps({'delay': platform_setting.value['delay']}),
+        status=200,
+        content_type=CONTENT_TYPE_LATEST
+    )
+
+
+@app.route('/api/current-frequency', methods=["GET"])
+def get_current_frequency():
+    platform_setting = platform_setting_provider.get()
+
+    return app.response_class(
+        response=json.dumps({'delay': platform_setting.value['delay']}),
+        status=200,
         content_type=CONTENT_TYPE_LATEST
     )

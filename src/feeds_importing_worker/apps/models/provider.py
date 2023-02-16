@@ -1,10 +1,12 @@
 from typing import Optional, List
 from datetime import datetime
 
+from sqlalchemy.orm.attributes import flag_modified
+
 from feeds_importing_worker.config.log_conf import logger
 from feeds_importing_worker.apps.models.base import SyncPostgresDriver
 from feeds_importing_worker.apps.models.models import (
-    Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship, IndicatorActivity, AuditLog
+    Feed, FeedRawData, Indicator, Process, IndicatorFeedRelationship, IndicatorActivity, AuditLog, PlatformSetting
 )
 from feeds_importing_worker.apps.enums import JobStatus
 from feeds_importing_worker.apps.constants import SERVICE_NAME
@@ -138,6 +140,8 @@ class ProcessProvider(BaseProvider):
             ).count()
 
             if not current_process:
+                process.service_name = SERVICE_NAME
+
                 session.add(process)
                 session.commit()
 
@@ -174,3 +178,22 @@ class AuditLogProvider(BaseProvider):
         audit_log.service_name = SERVICE_NAME
 
         self.data.append(audit_log)
+
+
+class PlatformSettingProvider(BaseProvider):
+    def get(self) -> PlatformSetting:
+        with self.session() as session:
+            query = session.query(PlatformSetting).where(PlatformSetting.key == SERVICE_NAME)
+
+            return query.first() or PlatformSetting(value={
+                'delay': 60,
+                'last_check': datetime.now().isoformat()
+            })
+
+    def update(self, platform_setting: PlatformSetting):
+        platform_setting.key = SERVICE_NAME
+        flag_modified(platform_setting, 'value')
+
+        with self.session() as session:
+            session.add(session.merge(platform_setting))
+            session.commit()
