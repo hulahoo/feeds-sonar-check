@@ -22,7 +22,7 @@ app = Flask(__name__)
 SECRET_KEY = os.urandom(32)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config["SESSION_COOKIE_SECURE"] = True
-app.config['WTF_CSRF_ENABLED'] = True
+app.config['WTF_CSRF_ENABLED'] = False
 
 csrf = CSRFProtect()
 csrf.init_app(app)
@@ -168,9 +168,10 @@ def preview():
 
 @app.route('/api/current-frequency', methods=["POST"])
 def post_current_frequency():
-    import json
-    logger.info(f"Incoming data to update: {request.get_json()}")
-    data = json.loads(request.get_json())
+    data = request.get_json()
+
+    logger.info(f"Incoming data to update: {data}")
+
     delay = int(data['delay'])
 
     platform_setting = platform_setting_provider.get()
