@@ -13,6 +13,7 @@ from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from feeds_importing_worker.apps.models.provider import FeedProvider, ProcessProvider, PlatformSettingProvider
 from feeds_importing_worker.apps.services import FeedService
 from feeds_importing_worker.apps.models.models import Feed, Process
+from feeds_importing_worker.config.config import settings
 from feeds_importing_worker.apps.enums import JobStatus
 from feeds_importing_worker.apps.constants import SERVICE_NAME
 
@@ -22,7 +23,7 @@ app = Flask(__name__)
 SECRET_KEY = os.urandom(32)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config["SESSION_COOKIE_SECURE"] = True
-app.config['WTF_CSRF_ENABLED'] = False
+app.config['WTF_CSRF_ENABLED'] = settings.app.csrf_enabled
 
 csrf = CSRFProtect()
 csrf.init_app(app)

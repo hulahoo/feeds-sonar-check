@@ -18,6 +18,7 @@ class APPConfig:
     dagster_home: str
     dagit_enabled: bool
     config_path: str
+    csrf_enabled: bool = False
 
 
 @dataclass
