@@ -123,8 +123,6 @@ class FeedService:
                     break
 
             self.indicator_provider.commit()
-            self.audit_log_provider.commit()
-            self.indicator_activity_provider.commit()
 
         except Exception as e:
             logger.error(f'Unable to parse content for feed {feed.id} \n {e}')
@@ -184,14 +182,14 @@ class FeedService:
         self.indicator_provider.add(indicator)
 
         if activity_type:
-            self.indicator_activity_provider.add(IndicatorActivity(
+            self.indicator_activity_provider.create(IndicatorActivity(
                 indicator_id=indicator.id,
                 activity_type=activity_type,
                 details={'feeds': [feed.id] for feed in indicator.feeds}
             ))
 
         if audit_type:
-            self.audit_log_provider.add(AuditLog(
+            self.audit_log_provider.create(AuditLog(
                 event_type=audit_type,
                 object_type='indicator',
                 object_name=indicator.value,

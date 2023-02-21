@@ -31,6 +31,11 @@ class BaseProvider:
 class IndicatorActivityProvider(BaseProvider):
     def add(self, indicator_activity: IndicatorActivity):
         self.data.append(indicator_activity)
+    
+    def create(self, indicator_activity: IndicatorActivity):
+        with self.session() as session:
+            session.add(indicator_activity)
+            session.commit()
 
 
 class FeedProvider(BaseProvider):
@@ -178,6 +183,11 @@ class AuditLogProvider(BaseProvider):
         audit_log.service_name = SERVICE_NAME
 
         self.data.append(audit_log)
+
+    def create(self, audit_log: AuditLog):
+        with self.session() as session:
+            session.add(audit_log)
+            session.commit()
 
 
 class PlatformSettingProvider(BaseProvider):
