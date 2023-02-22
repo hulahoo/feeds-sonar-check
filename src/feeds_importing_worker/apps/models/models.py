@@ -168,13 +168,3 @@ def receive_before_update(mapper, connection, target: Feed):
 @event.listens_for(Indicator, 'before_update')
 def receive_before_update(mapper, connection, target: Indicator):
     target.updated_at = datetime.now()
-
-
-@event.listens_for(Indicator, 'before_insert')
-def receive_before_insert(mapper, connection, target: Indicator):
-    IndicatorActivity(
-        indicator_id=target.id,
-        activity_type="Indicator created",
-        created_by=None,
-        details={}
-    )
