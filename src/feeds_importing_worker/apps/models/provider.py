@@ -51,6 +51,14 @@ class FeedProvider(BaseProvider):
 
             return query.all()
 
+    def get_new(self, date: datetime):
+        with self.session() as session:
+            query = session.query(Feed).filter(Feed.is_active == True).filter(
+                Feed.created_at > date
+            )
+
+            return query.all()
+
     def clear_old_data(self, feed: Feed, clear_before: datetime):
         with self.session() as session:
             query = session.query(FeedRawData).filter(

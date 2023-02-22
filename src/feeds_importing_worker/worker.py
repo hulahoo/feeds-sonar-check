@@ -39,17 +39,30 @@ def update_feed(feed: Feed):
 def add_jobs():
     platform_setting = platform_setting_provider.get()
 
-    minutes_from_last_check = (datetime.now() - datetime.fromisoformat(platform_setting.value['last_check'])).seconds / 60
+    minutes_from_last_check = (datetime.now() - datetime.fromisoformat(platform_setting.value['last_check'])).total_seconds() // 60
 
     if minutes_from_last_check < int(platform_setting.value['delay']):
-        logger.info('Skip schedule jobs')
-        return
+        # add new feeds to update queue
+        feeds = feed_provider.get_new(datetime.fromisoformat(platform_setting.value['last_check']))
 
-    logger.info('Add schedule jobs')
-    platform_setting.value['last_check'] = datetime.now().isoformat()
-    platform_setting_provider.update(platform_setting)
+        if feeds:
+            logger.info('Add new feeds to schedule')
 
-    feeds = feed_provider.get_all()
+            platform_setting.value['last_check'] = datetime.now().isoformat()
+            platform_setting_provider.update(platform_setting)
+        else:
+            logger.info(
+                f'Skip jobs. Waiting {int(platform_setting.value["delay"]) - minutes_from_last_check} min'
+            )
+
+    else:
+        # add all feeds to update queue
+        logger.info(f'Add all feeds to schedule after {platform_setting.value["delay"]} min')
+
+        feeds = feed_provider.get_all()
+
+        platform_setting.value['last_check'] = datetime.now().isoformat()
+        platform_setting_provider.update(platform_setting)
 
     for feed in feeds:
         process_provider.add(Process(
