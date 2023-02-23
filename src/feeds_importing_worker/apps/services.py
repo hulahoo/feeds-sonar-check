@@ -181,7 +181,7 @@ class FeedService:
             activity_type = 'Create'
             audit_type = 'create'
 
-        self.indicator_provider.add(indicator)
+        indicator = self.indicator_provider.add(indicator)
 
         if activity_type:
             self.indicator_activity_provider.add(IndicatorActivity(

@@ -78,7 +78,10 @@ class FeedRawDataProvider(BaseProvider):
 
 class IndicatorProvider(BaseProvider):
     def add(self, indicator: Indicator):
-        self.data.append(indicator)
+        with self.session() as session:
+            session.refresh(indicator)
+            self.data.append(indicator)
+            return indicator
 
     def get_by_value_type(self, value: str, type: str) -> Optional[Indicator]:
         with self.session() as session:
