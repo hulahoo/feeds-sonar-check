@@ -38,6 +38,7 @@ def update_feed(feed: Feed):
 @op
 def add_jobs():
     platform_setting = platform_setting_provider.get()
+    logger.info(f"Platform settings: {platform_setting}")
 
     minutes_from_last_check = (datetime.now() - datetime.fromisoformat(platform_setting.value['last_check'])).total_seconds() // 60
 

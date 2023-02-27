@@ -8,3 +8,7 @@ schedules:
 
 code_servers:
   local_startup_timeout: 14400
+
+python_logs:
+  managed_python_loggers:
+    - importing_worker

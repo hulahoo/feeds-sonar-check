@@ -1,4 +1,5 @@
 import csv
+import uuid
 import json
 
 from abc import ABC, abstractmethod
@@ -30,6 +31,7 @@ class PlainTextParser(IParser):
                 continue
 
             yield Indicator(
+                id=str(uuid.uuid4()),
                 ioc_type=parsing_rules['ioc-type'].value,
                 value=value,
             )

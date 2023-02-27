@@ -1,15 +1,16 @@
 import requests
+from typing import List
 
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 
 from datetime import datetime
 
-from feeds_importing_worker.config.log_conf import logger
-
-from feeds_importing_worker.apps.importer import get_parser, IParser
-from feeds_importing_worker.apps.constants import CHUNK_SIZE
 from feeds_importing_worker.apps.enums import FeedStatus
+from feeds_importing_worker.config.log_conf import logger
+from feeds_importing_worker.apps.constants import CHUNK_SIZE
+from feeds_importing_worker.apps.models.models import Indicator
+from feeds_importing_worker.apps.importer import get_parser, IParser
 from feeds_importing_worker.apps.models.models import Feed, FeedRawData, AuditLog, IndicatorActivity
 from feeds_importing_worker.apps.models.provider import FeedProvider, IndicatorProvider, IndicatorActivityProvider, AuditLogProvider
 
@@ -147,7 +148,7 @@ class FeedService:
         finally:
             self.feed_provider.update(feed)
 
-    def process_indicator(self, count, new_indicator, feed, old_indicators_id_list):
+    def process_indicator(self, count: int, new_indicator: Indicator, feed: Feed, old_indicators_id_list: List[Indicator]):
         if count % 50 == 0:
             logger.debug(f'count - {count}')
             logger.debug(f'Indicator info: value -{new_indicator.value}, ioc_type - {new_indicator.ioc_type}')
@@ -181,7 +182,7 @@ class FeedService:
             activity_type = 'Create'
             audit_type = 'create'
 
-        indicator = self.indicator_provider.add(indicator)
+        self.indicator_provider.add(indicator)
 
         if activity_type:
             self.indicator_activity_provider.add(IndicatorActivity(
